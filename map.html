@@ -1117,12 +1117,20 @@
     }
 
     .region-selected-bar {
-      padding: 12px 12px 10px;
+      padding: 14px 12px 12px;
       border-bottom: 1px solid #f5f5f5;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
+      flex-shrink: 0;
+      min-height: 58px;
+    }
+
+    .region-chip-separator {
+      color: #d5d5d5;
+      font-size: 18px;
+      line-height: 34px;
       flex-shrink: 0;
     }
 
@@ -1130,14 +1138,22 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 30px;
-      padding: 0 10px;
-      border-radius: 4px;
-      border: 1px solid #ff8a8a;
+      min-height: 34px;
+      padding: 0 16px;
+      border-radius: 6px;
+      border: 1px solid #f3f4f7;
+      color: #333;
+      font-size: 15px;
+      background: #f7f7fb;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .region-chip.active {
+      border-color: #ff4d4f;
       color: #ff4d4f;
-      font-size: 14px;
-      background: #fff5f5;
-      
+      background: #fff7f7;
+      box-shadow: inset 0 0 0 1px rgba(255, 77, 79, 0.08);
     }
 
     .region-list-wrap {
@@ -1642,6 +1658,21 @@
           </div>
 
           <div class="region-selector-body" v-if="regionSelectorTab === 'domestic'">
+            <div class="region-selected-bar" v-if="regionSelectorCrumbs.length">
+              <template v-for="(item, index) in regionSelectorCrumbs">
+                <div
+                  class="region-chip"
+                  :class="{ active: isRegionChipActive(item.step) }"
+                  :key="'domestic-chip-' + item.step"
+                  @click="switchRegionStepView(item.step)"
+                >{{ item.label }}</div>
+                <div
+                  class="region-chip-separator"
+                  v-if="index < regionSelectorCrumbs.length - 1"
+                  :key="'domestic-separator-' + item.step"
+                >-</div>
+              </template>
+            </div>
             <template v-if="regionStep === 'province'">
               <div class="region-hot-block">
                 <div class="region-block-title">热门城市</div>
@@ -1672,6 +1703,7 @@
                   <div class="region-group-items">
                     <div
                       class="region-list-item"
+                      :class="{ active: regionTemp.province === item.name }"
                       v-for="item in group.list"
                       :key="'province-' + item.name"
                       @click="selectProvince(item.name)"
@@ -1693,10 +1725,6 @@
             </template>
 
             <template v-if="regionStep === 'city'">
-              <div class="region-selected-bar">
-                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
-              </div>
-
               <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
                 <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
               </div>
@@ -1734,11 +1762,6 @@
             </template>
 
             <template v-if="regionStep === 'district'">
-              <div class="region-selected-bar">
-                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
-                <div class="region-chip" @click="goBackToCityStep">{{ regionTemp.city }}</div>
-              </div>
-
               <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
                 <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
               </div>
@@ -1777,6 +1800,21 @@
           </div>
 
           <div class="region-selector-body" v-if="regionSelectorTab === 'oversea'">
+            <div class="region-selected-bar" v-if="regionSelectorCrumbs.length">
+              <template v-for="(item, index) in regionSelectorCrumbs">
+                <div
+                  class="region-chip"
+                  :class="{ active: isRegionChipActive(item.step) }"
+                  :key="'oversea-chip-' + item.step"
+                  @click="switchRegionStepView(item.step)"
+                >{{ item.label }}</div>
+                <div
+                  class="region-chip-separator"
+                  v-if="index < regionSelectorCrumbs.length - 1"
+                  :key="'oversea-separator-' + item.step"
+                >-</div>
+              </template>
+            </div>
             <template v-if="regionStep === 'province'">
               <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
                 <div class="region-block-title" style="margin-bottom:8px;">选择地区</div>
@@ -1793,6 +1831,7 @@
                   <div class="region-group-items">
                     <div
                       class="region-list-item"
+                      :class="{ active: regionTemp.province === item.name }"
                       v-for="item in group.list"
                       :key="'oversea-province-' + item.name"
                       @click="selectProvince(item.name)"
@@ -1814,10 +1853,6 @@
             </template>
 
             <template v-if="regionStep === 'city'">
-              <div class="region-selected-bar">
-                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
-              </div>
-
               <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
                 <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
               </div>
@@ -1855,7 +1890,7 @@
             </template>
 
             <template v-if="regionStep === 'district'">
-              <div class="region-selected-bar">
+              <div class="region-selected-bar" v-if="false">
                 <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
                 <div class="region-chip" v-if="regionTemp.city && regionTemp.city !== '市辖区'" @click="goBackToCityStep">{{ regionTemp.city }}</div>
               </div>
@@ -2198,6 +2233,28 @@
         return this.groupedDistrictList.map(function (item) {
           return item.letter;
         });
+      },
+      regionSelectorCrumbs: function () {
+        var list = [];
+        if (this.regionTemp.province) {
+          list.push({
+            step: 'province',
+            label: this.regionTemp.province
+          });
+        }
+        if (this.regionTemp.city && this.regionTemp.city !== '市辖区') {
+          list.push({
+            step: 'city',
+            label: this.regionTemp.city
+          });
+        }
+        if (this.regionTemp.district) {
+          list.push({
+            step: 'district',
+            label: this.regionTemp.district
+          });
+        }
+        return list;
       },
       showRegionSuggest: function () {
         return this.activeTab === 'region' && this.regionSuggestList.length > 0 && !!this.regionForm.detailAddress;
@@ -2937,6 +2994,26 @@
         this.showRegionSelector = false;
       },
 
+      isRegionChipActive: function (step) {
+        return this.regionStep === step;
+      },
+
+      switchRegionStepView: function (step) {
+        if (!step) return;
+        if (step === 'city' && !this.regionTemp.city) return;
+        if (step === 'district' && !this.regionTemp.district) return;
+
+        this.regionStep = step;
+        var self = this;
+        this.$nextTick(function () {
+          var indexType = step;
+          if (step === 'province' && self.regionSelectorTab === 'oversea') {
+            indexType = 'overseaProvince';
+          }
+          self.handleRegionListScroll(indexType);
+        });
+      },
+
       switchRegionSelectorTab: function (tab) {
         this.regionSelectorTab = tab;
         this.regionTemp = {
@@ -2952,22 +3029,11 @@
       },
 
       goBackToProvinceStep: function () {
-        this.regionTemp.city = '';
-        this.regionTemp.district = '';
-        this.regionStep = 'province';
-        var self = this;
-        this.$nextTick(function () {
-          self.handleRegionListScroll(self.regionSelectorTab === 'oversea' ? 'overseaProvince' : 'province');
-        });
+        this.switchRegionStepView('province');
       },
 
       goBackToCityStep: function () {
-        this.regionTemp.district = '';
-        this.regionStep = 'city';
-        var self = this;
-        this.$nextTick(function () {
-          self.handleRegionListScroll('city');
-        });
+        this.switchRegionStepView('city');
       },
 
       selectHotCity: function (item) {
@@ -3663,30 +3729,28 @@
   }
 
   function getLetter(name) {
-    var map = {
-      '安': 'A', '北': 'B', '重': 'C', '福': 'F', '甘': 'G', '广': 'G', '贵': 'G',
-      '海': 'H', '河': 'H', '黑': 'H', '湖': 'H', '吉': 'J', '江': 'J', '辽': 'L',
-      '内': 'N', '宁': 'N', '青': 'Q', '山': 'S', '上': 'S', '四': 'S', '天': 'T',
-      '西': 'X', '新': 'X', '云': 'Y', '浙': 'Z', '合': 'H', '芜': 'W', '蚌': 'B',
-      '淮': 'H', '马': 'M', '铜': 'T', '黄': 'H', '滁': 'C', '阜': 'F', '宿': 'S',
-      '六': 'L', '亳': 'B', '池': 'C', '宣': 'X', '石': 'S', '唐': 'T', '保': 'B',
-      '廊': 'L', '秦': 'Q', '邯': 'H', '邢': 'X', '沧': 'C', '衡': 'H', '张': 'Z',
-      '承': 'C', '南': 'N', '柳': 'L', '桂': 'G', '梧': 'W', '玉': 'Y', '百': 'B',
-      '钦': 'Q', '防': 'F', '深': 'S', '珠': 'Z', '佛': 'F', '东': 'D', '中': 'Z',
-      '惠': 'H', '汕': 'S', '湛': 'Z', '肇': 'Z', '茂': 'M', '揭': 'J', '清': 'Q',
-      '武': 'W', '长': 'C', '株': 'Z', '湘': 'X', '岳': 'Y', '常': 'C', '郴': 'C',
-      '益': 'Y', '邵': 'S', '怀': 'H', '永': 'Y', '哈': 'H', '齐': 'Q', '牡': 'M',
-      '佳': 'J', '大': 'D', '沈': 'S', '鞍': 'A', '抚': 'F', '本': 'B', '丹': 'D',
-      '锦': 'J', '营': 'Y', '呼': 'H', '包': 'B', '赤': 'C', '鄂': 'E', '通': 'T',
-      '银': 'Y', '吴': 'W', '固': 'G', '西': 'X', '济': 'J', '烟': 'Y', '潍': 'W',
-      '淄': 'Z', '临': 'L', '威': 'W', '太': 'T', '运': 'Y', '晋': 'J', '成': 'C',
-      '绵': 'M', '德': 'D', '乐': 'L', '宜': 'Y', '泸': 'L', '自': 'Z', '拉': 'L',
-      '乌': 'W', '克': 'K', '喀': 'K', '伊': 'Y', '昆': 'K', '曲': 'Q', '红': 'H',
-      '丽': 'L', '杭': 'H', '嘉': 'J', '金': 'J', '宁': 'N', '衢': 'Q', '绍': 'S',
-      '台': 'T', '温': 'W', '舟': 'Z', '香': 'X', '澳': 'A'
-    };
-    var first = (name || '').charAt(0);
-    return map[first] || '';
+    var value = String(name || '').trim();
+    if (!value) return '';
+
+    var first = value.charAt(0);
+
+    if (/^[A-Za-z]$/.test(first)) {
+      return first.toUpperCase();
+    }
+
+    var initials = 'ABCDEFGHJKLMNOPQRSTWXYZ';
+    var boundaryChars = '阿芭擦搭蛾发噶哈机喀垃妈拿哦啪期然撒塌挖昔压匝';
+
+    for (var i = 0; i < boundaryChars.length; i++) {
+      var current = boundaryChars.charAt(i);
+      var next = boundaryChars.charAt(i + 1);
+
+      if (first.localeCompare(current, 'zh-CN') >= 0 && (!next || first.localeCompare(next, 'zh-CN') < 0)) {
+        return initials.charAt(i) || '';
+      }
+    }
+
+    return '';
   }
 </script>
 </body>
