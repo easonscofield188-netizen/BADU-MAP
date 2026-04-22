@@ -1333,11 +1333,6 @@
                 </div>
               </div>
 
-              <div v-if="addressRiskList.length" class="risk-box">
-                <div style="font-weight:600; margin-bottom:4px;">地址异常提示</div>
-                <div v-for="(item, index) in addressRiskList" :key="'paste-risk-' + index">- {{ item }}</div>
-              </div>
-
               <div class="clipboard-bar">
                 <span>地址粘贴板 ^</span>
               </div>
@@ -1481,7 +1476,7 @@
                 <div class="hot-city-grid">
                   <div
                     class="hot-city-item"
-                    v-for="item in hotCityList"
+                    v-for="item in hotRegionList"
                     :key="'hot-' + item.city"
                     @click="selectHotCity(item)"
                   >
@@ -1586,17 +1581,100 @@
           </div>
 
           <div class="region-selector-body" v-if="regionSelectorTab === 'oversea'">
-            <div class="oversea-list">
-              <div
-                class="oversea-item"
-                v-for="item in overseaList"
-                :key="'os-' + item"
-                :class="{ active: regionDisplayText === item }"
-                @click="selectOverseaRegion(item)"
-              >
-                {{ item }}
+            <template v-if="regionStep === 'province'">
+              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:8px;">选择地区</div>
               </div>
-            </div>
+
+              <div class="region-list-wrap">
+                <div
+                  class="region-group"
+                  v-for="group in groupedOverseaProvinceList"
+                  :key="'oversea-province-group-' + group.letter"
+                >
+                  <div class="region-group-letter">{{ group.letter }}</div>
+                  <div
+                    class="region-list-item"
+                    v-for="item in group.list"
+                    :key="'oversea-province-' + item.name"
+                    @click="selectProvince(item.name)"
+                  >
+                    {{ item.name }}
+                  </div>
+                </div>
+
+                <div class="region-side-index">
+                  <span v-for="letter in overseaProvinceLetterList" :key="'op-index-' + letter">{{ letter }}</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="regionStep === 'city'">
+              <div class="region-selected-bar">
+                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
+              </div>
+
+              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
+              </div>
+
+              <div class="region-list-wrap">
+                <div
+                  class="region-group"
+                  v-for="group in groupedCityList"
+                  :key="'oversea-city-group-' + group.letter"
+                >
+                  <div class="region-group-letter">{{ group.letter }}</div>
+                  <div
+                    class="region-list-item"
+                    :class="{ active: regionTemp.city === item.name }"
+                    v-for="item in group.list"
+                    :key="'oversea-city-' + item.name"
+                    @click="selectCity(item.name)"
+                  >
+                    {{ item.name }}
+                  </div>
+                </div>
+
+                <div class="region-side-index">
+                  <span v-for="letter in cityLetterList" :key="'oc-index-' + letter">{{ letter }}</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="regionStep === 'district'">
+              <div class="region-selected-bar">
+                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
+                <div class="region-chip" v-if="regionTemp.city && regionTemp.city !== '市辖区'" @click="goBackToCityStep">{{ regionTemp.city }}</div>
+              </div>
+
+              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
+              </div>
+
+              <div class="region-list-wrap">
+                <div
+                  class="region-group"
+                  v-for="group in groupedDistrictList"
+                  :key="'oversea-district-group-' + group.letter"
+                >
+                  <div class="region-group-letter">{{ group.letter }}</div>
+                  <div
+                    class="region-list-item"
+                    :class="{ active: regionTemp.district === item.name }"
+                    v-for="item in group.list"
+                    :key="'oversea-district-' + item.name"
+                    @click="selectDistrict(item.name)"
+                  >
+                    {{ item.name }}
+                  </div>
+                </div>
+
+                <div class="region-side-index">
+                  <span v-for="letter in districtLetterList" :key="'od-index-' + letter">{{ letter }}</span>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </transition>
@@ -1646,6 +1724,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
+<script src="./allianity-city-data.js"></script>
 <script src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=HgjE1KgxQkaoM0G66LUd1kQ1TpPBpQg5"></script>
 <script>
   new Vue({
@@ -1736,135 +1815,6 @@
           district: ''
         },
 
-        hotCityList: [
-          { province: '北京', city: '北京市', district: '朝阳区' },
-          { province: '上海', city: '上海市', district: '浦东新区' },
-          { province: '广东', city: '广州市', district: '天河区' },
-          { province: '广东', city: '深圳市', district: '南山区' },
-          { province: '浙江', city: '杭州市', district: '西湖区' },
-          { province: '江苏', city: '南京市', district: '玄武区' },
-          { province: '江苏', city: '苏州市', district: '姑苏区' },
-          { province: '天津', city: '天津市', district: '和平区' },
-          { province: '湖北', city: '武汉市', district: '武昌区' },
-          { province: '湖南', city: '长沙市', district: '岳麓区' }
-        ],
-
-        overseaList: [
-          '香港特别行政区',
-          '澳门特别行政区',
-          '台湾省',
-          '新加坡',
-          '日本',
-          '韩国',
-          '美国',
-          '加拿大',
-          '英国',
-          '澳大利亚'
-        ],
-
-        provinceList: [
-          { name: '安徽', letter: 'A' },
-          { name: '北京', letter: 'B' },
-          { name: '重庆', letter: 'C' },
-          { name: '福建', letter: 'F' },
-          { name: '甘肃', letter: 'G' },
-          { name: '广东', letter: 'G' },
-          { name: '广西', letter: 'G' },
-          { name: '贵州', letter: 'G' },
-          { name: '海南', letter: 'H' },
-          { name: '河北', letter: 'H' },
-          { name: '河南', letter: 'H' },
-          { name: '黑龙江', letter: 'H' },
-          { name: '湖北', letter: 'H' },
-          { name: '湖南', letter: 'H' },
-          { name: '吉林', letter: 'J' },
-          { name: '江苏', letter: 'J' },
-          { name: '江西', letter: 'J' },
-          { name: '辽宁', letter: 'L' },
-          { name: '内蒙古', letter: 'N' },
-          { name: '宁夏', letter: 'N' },
-          { name: '青海', letter: 'Q' },
-          { name: '山东', letter: 'S' },
-          { name: '山西', letter: 'S' },
-          { name: '陕西', letter: 'S' },
-          { name: '上海', letter: 'S' },
-          { name: '四川', letter: 'S' },
-          { name: '天津', letter: 'T' },
-          { name: '西藏', letter: 'X' },
-          { name: '新疆', letter: 'X' },
-          { name: '云南', letter: 'Y' },
-          { name: '浙江', letter: 'Z' }
-        ],
-
-        cityData: {
-          '安徽': ['合肥市', '芜湖市', '蚌埠市', '淮南市', '马鞍山市', '铜陵市', '安庆市', '黄山市', '滁州市', '阜阳市', '宿州市', '六安市', '亳州市', '池州市', '宣城市'],
-          '北京': ['北京市'],
-          '重庆': ['重庆市'],
-          '福建': ['福州市', '厦门市', '泉州市', '漳州市', '莆田市', '三明市', '南平市', '龙岩市', '宁德市'],
-          '甘肃': ['兰州市', '天水市', '酒泉市', '嘉峪关市', '张掖市', '武威市', '庆阳市', '平凉市', '定西市', '陇南市'],
-          '广东': ['广州市', '深圳市', '珠海市', '佛山市', '东莞市', '中山市', '惠州市', '汕头市', '湛江市', '江门市', '肇庆市', '茂名市', '揭阳市', '清远市'],
-          '广西': ['南宁市', '柳州市', '桂林市', '北海市', '梧州市', '玉林市', '百色市', '河池市', '钦州市', '防城港市', '贵港市'],
-          '贵州': ['贵阳市', '遵义市', '六盘水市', '安顺市', '毕节市', '铜仁市'],
-          '海南': ['海口市', '三亚市', '三沙市', '儋州市'],
-          '河北': ['石家庄市', '唐山市', '保定市', '廊坊市', '秦皇岛市', '邯郸市', '邢台市', '沧州市', '衡水市', '张家口市', '承德市'],
-          '河南': ['郑州市', '洛阳市', '开封市', '新乡市', '南阳市', '许昌市', '平顶山市', '安阳市', '商丘市', '信阳市', '周口市', '驻马店市'],
-          '黑龙江': ['哈尔滨市', '齐齐哈尔市', '牡丹江市', '佳木斯市', '大庆市'],
-          '湖北': ['武汉市', '宜昌市', '襄阳市', '黄石市', '荆州市', '十堰市', '孝感市', '黄冈市', '咸宁市'],
-          '湖南': ['长沙市', '株洲市', '湘潭市', '衡阳市', '岳阳市', '常德市', '郴州市', '益阳市', '邵阳市', '怀化市', '永州市'],
-          '吉林': ['长春市', '吉林市', '延边州', '四平市', '通化市'],
-          '江苏': ['南京市', '无锡市', '徐州市', '常州市', '苏州市', '南通市', '连云港市', '淮安市', '盐城市', '扬州市', '镇江市', '泰州市', '宿迁市'],
-          '江西': ['南昌市', '九江市', '赣州市', '上饶市', '宜春市', '吉安市', '抚州市', '景德镇市', '萍乡市'],
-          '辽宁': ['沈阳市', '大连市', '鞍山市', '抚顺市', '本溪市', '丹东市', '锦州市', '营口市'],
-          '内蒙古': ['呼和浩特市', '包头市', '赤峰市', '鄂尔多斯市', '通辽市', '呼伦贝尔市'],
-          '宁夏': ['银川市', '石嘴山市', '吴忠市', '固原市', '中卫市'],
-          '青海': ['西宁市', '海东市'],
-          '山东': ['济南市', '青岛市', '烟台市', '潍坊市', '淄博市', '临沂市', '济宁市', '威海市', '东营市'],
-          '山西': ['太原市', '大同市', '运城市', '长治市', '晋中市', '临汾市'],
-          '陕西': ['西安市', '咸阳市', '宝鸡市', '渭南市', '汉中市', '榆林市', '延安市'],
-          '上海': ['上海市'],
-          '四川': ['成都市', '绵阳市', '德阳市', '乐山市', '宜宾市', '南充市', '泸州市', '自贡市'],
-          '天津': ['天津市'],
-          '西藏': ['拉萨市', '日喀则市'],
-          '新疆': ['乌鲁木齐市', '克拉玛依市', '喀什地区', '伊犁州'],
-          '云南': ['昆明市', '曲靖市', '大理州', '玉溪市', '红河州', '丽江市'],
-          '浙江': ['杭州市', '湖州市', '嘉兴市', '金华市', '丽水市', '宁波市', '衢州市', '绍兴市', '台州市', '温州市', '舟山市']
-        },
-
-        districtData: {
-          '北京市': ['东城区', '西城区', '朝阳区', '海淀区', '丰台区', '通州区', '昌平区'],
-          '上海市': ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '浦东新区', '闵行区'],
-          '广州市': ['越秀区', '海珠区', '天河区', '白云区', '番禺区', '黄埔区'],
-          '深圳市': ['福田区', '罗湖区', '南山区', '宝安区', '龙岗区', '龙华区'],
-          '杭州市': ['上城区', '拱墅区', '西湖区', '滨江区', '萧山区', '余杭区', '临平区'],
-          '南京市': ['玄武区', '秦淮区', '建邺区', '鼓楼区', '栖霞区', '江宁区'],
-          '苏州市': ['姑苏区', '虎丘区', '吴中区', '相城区', '吴江区', '工业园区'],
-          '天津市': ['和平区', '河东区', '河西区', '南开区', '河北区', '滨海新区'],
-          '武汉市': ['江岸区', '江汉区', '武昌区', '洪山区', '汉阳区', '东西湖区'],
-          '长沙市': ['芙蓉区', '天心区', '岳麓区', '开福区', '雨花区', '望城区'],
-          '宁波市': ['海曙区', '江北区', '镇海区', '鄞州区', '奉化区', '北仑区'],
-          '温州市': ['鹿城区', '龙湾区', '瓯海区', '洞头区', '永嘉县', '瑞安市'],
-          '嘉兴市': ['南湖区', '秀洲区', '海宁市', '桐乡市'],
-          '绍兴市': ['越城区', '柯桥区', '上虞区', '诸暨市'],
-          '湖州市': ['吴兴区', '南浔区', '德清县', '长兴县'],
-          '金华市': ['婺城区', '金东区', '义乌市', '东阳市'],
-          '台州市': ['椒江区', '黄岩区', '路桥区', '临海市'],
-          '丽水市': ['莲都区', '青田县', '缙云县'],
-          '衢州市': ['柯城区', '衢江区', '江山市'],
-          '舟山市': ['定海区', '普陀区', '岱山县'],
-          '合肥市': ['庐阳区', '蜀山区', '包河区', '瑶海区'],
-          '成都市': ['锦江区', '青羊区', '武侯区', '成华区', '高新区'],
-          '重庆市': ['渝中区', '江北区', '南岸区', '渝北区', '九龙坡区'],
-          '福州市': ['鼓楼区', '台江区', '仓山区', '晋安区'],
-          '厦门市': ['思明区', '湖里区', '集美区', '海沧区'],
-          '西安市': ['新城区', '碑林区', '莲湖区', '雁塔区', '未央区'],
-          '青岛市': ['市南区', '市北区', '崂山区', '黄岛区'],
-          '济南市': ['历下区', '市中区', '槐荫区', '历城区'],
-          '郑州市': ['中原区', '金水区', '二七区', '管城回族区'],
-          '石家庄市': ['长安区', '桥西区', '新华区', '裕华区'],
-          '海口市': ['龙华区', '秀英区', '琼山区', '美兰区'],
-          '南宁市': ['青秀区', '西乡塘区', '兴宁区', '江南区']
-        },
-
         form: {
           province: '',
           city: '',
@@ -1880,20 +1830,97 @@
     },
 
     computed: {
+      regionDataSource: function () {
+        if (typeof cityData3 !== 'undefined' && Array.isArray(cityData3)) {
+          return cityData3;
+        }
+        return [];
+      },
+      domesticRegionTree: function () {
+        return this.regionDataSource.filter(function (item) {
+          return ['71', '81', '82'].indexOf(String(item.value)) === -1;
+        });
+      },
+      overseaRegionTree: function () {
+        return this.regionDataSource.filter(function (item) {
+          return ['71', '81', '82'].indexOf(String(item.value)) > -1;
+        });
+      },
+      overseaRegionList: function () {
+        return this.overseaRegionTree
+          .map(function (item) {
+            return item.text;
+          });
+      },
+      hotRegionList: function () {
+        var self = this;
+        var hotConfig = [
+          { city: '北京市', district: '朝阳区' },
+          { city: '上海市', district: '浦东新区' },
+          { city: '广州市', district: '天河区' },
+          { city: '深圳市', district: '南山区' },
+          { city: '杭州市', district: '西湖区' },
+          { city: '南京市', district: '玄武区' },
+          { city: '苏州市', district: '姑苏区' },
+          { city: '天津市', district: '和平区' },
+          { city: '武汉市', district: '武昌区' },
+          { city: '长沙市', district: '岳麓区' }
+        ];
+
+        return hotConfig.map(function (item) {
+          return self.findHotCitySelection(item);
+        }).filter(Boolean);
+      },
       groupedProvinceList: function () {
-        return this.groupByLetter(this.provinceList);
+        var list = (this.domesticRegionTree || []).map(function (item) {
+          return {
+            name: item.text,
+            letter: getLetter(item.text)
+          };
+        });
+        return this.groupByLetter(list.sort(sortByLetterAndName));
       },
       provinceLetterList: function () {
         return this.groupedProvinceList.map(function (item) {
           return item.letter;
         });
       },
-      currentCityList: function () {
-        var province = this.regionTemp.province;
-        var list = (this.cityData[province] || []).map(function (name) {
+      groupedOverseaProvinceList: function () {
+        var list = (this.overseaRegionTree || []).map(function (item) {
           return {
-            name: name,
-            letter: getLetter(name)
+            name: item.text,
+            letter: getLetter(item.text)
+          };
+        });
+        return this.groupByLetter(list.sort(sortByLetterAndName));
+      },
+      overseaProvinceLetterList: function () {
+        return this.groupedOverseaProvinceList.map(function (item) {
+          return item.letter;
+        });
+      },
+      currentRegionTree: function () {
+        return this.regionSelectorTab === 'oversea' ? this.overseaRegionTree : this.domesticRegionTree;
+      },
+      currentProvinceNode: function () {
+        return this.findProvinceNode(this.regionTemp.province);
+      },
+      currentCityList: function () {
+        var provinceNode = this.currentProvinceNode;
+        if (!provinceNode) return [];
+
+        var children = provinceNode.children || [];
+        if (children.length === 1 && children[0].text === '市辖区') {
+          return [{
+            name: provinceNode.text,
+            letter: getLetter(provinceNode.text)
+          }];
+        }
+
+        var list = children.map(function (item) {
+          return {
+            name: item.text,
+            letter: getLetter(item.text)
           };
         });
         return list.sort(sortByLetterAndName);
@@ -1907,11 +1934,13 @@
         });
       },
       currentDistrictList: function () {
-        var city = this.regionTemp.city;
-        var list = (this.districtData[city] || []).map(function (name) {
+        var cityNode = this.findCityNode(this.regionTemp.province, this.regionTemp.city);
+        if (!cityNode) return [];
+
+        var list = (cityNode.children || []).map(function (item) {
           return {
-            name: name,
-            letter: getLetter(name)
+            name: item.text,
+            letter: getLetter(item.text)
           };
         });
         return list.sort(sortByLetterAndName);
@@ -2010,6 +2039,7 @@
 
       reversePointToAddress: function (point, callback) {
         if (!this.geocoder || !point) return;
+        var self = this;
 
         this.geocoder.getLocation(point, function (rs) {
           if (!rs) return;
@@ -2022,7 +2052,7 @@
             title: firstPoi ? firstPoi.title : (ac.street || '当前位置'),
             name: firstPoi ? firstPoi.title : (ac.street || '当前位置'),
             address: rs.address || '',
-            province: ac.province || '',
+            province: self.formatProvinceName(ac.province || ''),
             city: ac.city || '',
             district: ac.district || '',
             street: ac.street || '',
@@ -2066,9 +2096,11 @@
           streetNumber: ''
         }, location || {});
 
+        this.selectedLocation.province = this.formatProvinceName(this.selectedLocation.province);
+
         this.sheetAddressTitle = title || name || '';
         this.sheetAddressText = address;
-        this.sheetProviceCityDistrict = [province, city, district].filter(Boolean).join(' ');
+        this.sheetProviceCityDistrict = [this.selectedLocation.province, city, district].filter(Boolean).join(' ');
       },
 
       openLocationPicker: function () {
@@ -2153,7 +2185,7 @@
             point: center,
             title: (pois[0] && pois[0].title) || (ac.street || '当前位置'),
             address: rs.address || '',
-            province: ac.province || '',
+            province: self.formatProvinceName(ac.province || ''),
             city: ac.city || '',
             district: ac.district || '',
             street: ac.street || '',
@@ -2169,7 +2201,7 @@
               point: item.point,
               title: item.title || '',
               address: item.address || rs.address || '',
-              province: ac.province || '',
+              province: self.formatProvinceName(ac.province || ''),
               city: ac.city || '',
               district: ac.district || '',
               street: ac.street || '',
@@ -2287,7 +2319,7 @@
                 point: poi.point,
                 title: poi.title || '',
                 address: poi.address || '',
-                province: poi.province || '',
+                province: self.formatProvinceName(poi.province || ''),
                 city: poi.city || '',
                 district: poi.district || '',
                 street: '',
@@ -2330,9 +2362,146 @@
         return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       },
 
+      formatProvinceName: function (name) {
+        var value = (name || '').trim();
+        if (!value) return '';
+
+        var provinceMap = {
+          '北京': '北京市',
+          '天津': '天津市',
+          '上海': '上海市',
+          '重庆': '重庆市',
+          '内蒙古': '内蒙古自治区',
+          '广西': '广西壮族自治区',
+          '西藏': '西藏自治区',
+          '宁夏': '宁夏回族自治区',
+          '新疆': '新疆维吾尔自治区',
+          '香港': '香港特别行政区',
+          '澳门': '澳门特别行政区',
+          '台湾': '台湾省'
+        };
+
+        if (provinceMap[value]) {
+          return provinceMap[value];
+        }
+
+        if (/省$|市$|自治区$|特别行政区$/.test(value)) {
+          return value;
+        }
+
+        return value + '省';
+      },
+
+      getRegionParts: function (province, city, district) {
+        var parts = [];
+        var fullProvince = this.formatProvinceName(province || '');
+        var cityName = city || '';
+        var districtName = district || '';
+
+        if (fullProvince) {
+          parts.push(fullProvince);
+        }
+
+        if (cityName && cityName !== fullProvince && cityName !== '市辖区') {
+          parts.push(cityName);
+        }
+
+        if (districtName) {
+          parts.push(districtName);
+        }
+
+        return parts;
+      },
+
+      getProvinceSelectorValue: function (name) {
+        var value = (name || '').trim();
+        if (!value) return '';
+
+        var reverseProvinceMap = {
+          '北京市': '北京',
+          '天津市': '天津',
+          '上海市': '上海',
+          '重庆市': '重庆',
+          '内蒙古自治区': '内蒙古',
+          '广西壮族自治区': '广西',
+          '西藏自治区': '西藏',
+          '宁夏回族自治区': '宁夏',
+          '新疆维吾尔自治区': '新疆',
+          '香港特别行政区': '香港',
+          '澳门特别行政区': '澳门',
+          '台湾省': '台湾'
+        };
+
+        if (reverseProvinceMap[value]) {
+          return reverseProvinceMap[value];
+        }
+
+        return value.replace(/省$/, '');
+      },
+
+      findProvinceNode: function (name) {
+        var fullName = this.formatProvinceName(name);
+        var list = this.currentRegionTree || [];
+
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].text === fullName) {
+            return list[i];
+          }
+        }
+
+        return null;
+      },
+
+      findCityNode: function (provinceName, cityName) {
+        var provinceNode = this.findProvinceNode(provinceName);
+        if (!provinceNode) return null;
+
+        var children = provinceNode.children || [];
+        if (children.length === 1 && children[0].text === '市辖区' && cityName === provinceNode.text) {
+          return children[0];
+        }
+
+        for (var i = 0; i < children.length; i++) {
+          if (children[i].text === cityName) {
+            return children[i];
+          }
+        }
+
+        return null;
+      },
+
+      findHotCitySelection: function (config) {
+        var list = this.domesticRegionTree || [];
+
+        for (var i = 0; i < list.length; i++) {
+          var provinceNode = list[i];
+          var children = provinceNode.children || [];
+
+          if (children.length === 1 && children[0].text === '市辖区' && provinceNode.text === config.city) {
+            return {
+              province: provinceNode.text,
+              city: provinceNode.text,
+              district: config.district || ''
+            };
+          }
+
+          for (var j = 0; j < children.length; j++) {
+            if (children[j].text === config.city) {
+              return {
+                province: provinceNode.text,
+                city: children[j].text,
+                district: config.district || ''
+              };
+            }
+          }
+        }
+
+        return null;
+      },
+
       openRegionSelector: function () {
         this.showRegionSelector = true;
-        this.regionSelectorTab = 'domestic';
+        this.regionSelectorTab = this.overseaRegionList.indexOf(this.regionForm.province) > -1 ? 'oversea' : 'domestic';
 
         this.regionTemp = {
           province: this.regionForm.province || '',
@@ -2357,6 +2526,12 @@
 
       switchRegionSelectorTab: function (tab) {
         this.regionSelectorTab = tab;
+        this.regionTemp = {
+          province: '',
+          city: '',
+          district: ''
+        };
+        this.regionStep = 'province';
       },
 
       goBackToProvinceStep: function () {
@@ -2381,6 +2556,20 @@
         this.regionTemp.province = name;
         this.regionTemp.city = '';
         this.regionTemp.district = '';
+        var provinceNode = this.findProvinceNode(name);
+        var children = provinceNode && provinceNode.children ? provinceNode.children : [];
+
+        if (!children.length) {
+          this.applyRegionSelection();
+          return;
+        }
+
+        if (children.length === 1 && children[0].text === '市辖区') {
+          this.regionTemp.city = '市辖区';
+          this.regionStep = 'district';
+          return;
+        }
+
         this.regionStep = 'city';
       },
 
@@ -2388,7 +2577,8 @@
         this.regionTemp.city = name;
         this.regionTemp.district = '';
 
-        var districtList = this.districtData[name] || [];
+        var cityNode = this.findCityNode(this.regionTemp.province, name);
+        var districtList = cityNode && cityNode.children ? cityNode.children : [];
         if (districtList.length) {
           this.regionStep = 'district';
         } else {
@@ -2402,29 +2592,29 @@
       },
 
       selectOverseaRegion: function (name) {
-        this.regionForm.province = name;
+        this.regionForm.province = this.formatProvinceName(name);
         this.regionForm.city = '';
         this.regionForm.district = '';
-        this.regionDisplayText = name;
+        this.regionDisplayText = this.getRegionParts(this.regionForm.province, '', '').join(' ');
         this.showRegionSelector = false;
         this.activeTab = 'region';
       },
 
       applyRegionSelection: function () {
-        this.regionForm.province = this.regionTemp.province || '';
+        this.regionForm.province = this.formatProvinceName(this.regionTemp.province || '');
         this.regionForm.city = this.regionTemp.city || '';
         this.regionForm.district = this.regionTemp.district || '';
-        this.regionDisplayText = [
+        this.regionDisplayText = this.getRegionParts(
           this.regionForm.province,
           this.regionForm.city,
           this.regionForm.district
-        ].filter(Boolean).join(' ');
+        ).join(' ');
         this.showRegionSelector = false;
         this.activeTab = 'region';
       },
 
       composeRegionFullAddress: function () {
-        var region = [this.regionForm.province, this.regionForm.city, this.regionForm.district].filter(Boolean).join('');
+        var region = this.getRegionParts(this.regionForm.province, this.regionForm.city, this.regionForm.district).join('');
         return (region || '') + (this.regionForm.detailAddress || '');
       },
 
@@ -2467,6 +2657,11 @@
 
         var cleaned = this.cleanAddressText(text);
         var parsed = this.simpleParseAddress(cleaned);
+
+        if (this.isRegionOnlyPaste(cleaned, parsed)) {
+          this.handleRegionOnlyPaste(cleaned, parsed);
+          return;
+        }
 
         if (!this.geocoder) {
           var fallbackLocation = {
@@ -2526,27 +2721,112 @@
         });
       },
 
+      isRegionOnlyPaste: function (cleaned, parsed) {
+        if (!cleaned || !parsed) return false;
+
+        var hasRegionInfo = !!(parsed.province || parsed.city || parsed.district);
+        if (!hasRegionInfo) return false;
+
+        var hasDetailInfo = !!(parsed.street || parsed.streetNumber || this.extractDoorNumber(parsed));
+        if (hasDetailInfo) return false;
+
+        var normalizedText = String(cleaned).replace(/\s+/g, '');
+        var normalizedRegion = [
+          parsed.province || '',
+          parsed.city || '',
+          parsed.district || ''
+        ].join('').replace(/\s+/g, '');
+
+        return !!normalizedRegion && normalizedText === normalizedRegion;
+      },
+
+      handleRegionOnlyPaste: function (cleaned, parsed) {
+        var self = this;
+
+        var applyRegion = function (province, city, district, riskLocation) {
+          self.selectedLocation = {
+            point: null,
+            title: '',
+            name: '',
+            address: '',
+            province: '',
+            city: '',
+            district: '',
+            street: '',
+            streetNumber: ''
+          };
+          self.sheetAddressTitle = '';
+          self.sheetAddressText = '';
+          self.sheetProviceCityDistrict = '';
+          self.sheetDoorNumber = '';
+
+          self.regionForm.province = self.formatProvinceName(province || '');
+          self.regionForm.city = city || '';
+          self.regionForm.district = district || '';
+          self.regionForm.detailAddress = '';
+          self.regionDisplayText = self.getRegionParts(
+            self.regionForm.province,
+            self.regionForm.city,
+            self.regionForm.district
+          ).join(' ');
+
+          if (riskLocation) {
+            self.validateAddressRisk(cleaned, parsed, riskLocation);
+          } else {
+            self.addressRiskList = [];
+            self.addressRiskText = '';
+          }
+          self.showPasteConfirm = false;
+          self.pendingPasteSelection = null;
+          self.activeTab = 'region';
+          self.isParsingPaste = false;
+        };
+
+        var fallbackProvince = this.currentLocation && this.currentLocation.province ? this.currentLocation.province : '';
+        var fallbackCity = this.currentLocation && this.currentLocation.city ? this.currentLocation.city : '';
+        var fallbackDistrict = this.currentLocation && this.currentLocation.district ? this.currentLocation.district : '';
+
+        this.searchAddressByText(cleaned, function (result) {
+          var province = (result && result.province) || parsed.province || fallbackProvince || '';
+          var city = (result && result.city) || parsed.city || fallbackCity || '';
+          var district = parsed.district || '';
+
+          if (!district) {
+            if (parsed.province && parsed.city) {
+              district = fallbackDistrict || (result && result.district) || '';
+            } else {
+              district = (result && result.district) || fallbackDistrict || '';
+            }
+          } else if (result && result.district) {
+            district = result.district;
+          }
+
+          var finalRegionLocation = {
+            province: province,
+            city: city,
+            district: district
+          };
+
+          applyRegion(province, city, district, finalRegionLocation);
+        });
+      },
+
       buildSearchDisplayTitle: function (parsed, result) {
         var parsedName = parsed && parsed.name ? parsed.name : '';
         var resultTitle = result && result.title ? result.title : '';
-        var parsedDetail = parsed && parsed.detail ? parsed.detail : '';
 
         if (parsedName && parsedName.length >= resultTitle.length) {
           return parsedName;
         }
 
-        if (resultTitle && parsedDetail && resultTitle.indexOf(parsedDetail) === -1 && /^[A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+$/.test(parsedDetail)) {
-          return resultTitle + parsedDetail;
-        }
-
-        return resultTitle || parsedName || parsedDetail || '已识别地址';
+        return resultTitle || parsedName || '已识别地址';
       },
 
       buildPasteSelectionCandidate: function (cleaned, parsed, finalLocation) {
         var province = finalLocation && finalLocation.province ? finalLocation.province : parsed.province || '';
         var city = finalLocation && finalLocation.city ? finalLocation.city : parsed.city || '';
         var district = finalLocation && finalLocation.district ? finalLocation.district : parsed.district || '';
-        var regionText = [province, city, district].filter(Boolean).join(' ');
+        var regionText = this.getRegionParts(province, city, district).join(' ');
         var detailAddress = this.getPasteConfirmDetailAddress(cleaned, parsed, finalLocation);
 
         return {
@@ -2599,7 +2879,13 @@
 
       extractDoorNumber: function (parsed) {
         if (!parsed) return '';
-        return parsed.streetNumber || '';
+        if (parsed.streetNumber) {
+          return parsed.streetNumber;
+        }
+
+        var detail = parsed.detail || '';
+        var tailNumberMatch = detail.match(/(\d{2,}[A-Za-z]?|\d+[甲乙丙丁])$/);
+        return tailNumberMatch ? tailNumberMatch[0] : '';
       },
 
       openPasteConfirm: function (candidate) {
@@ -2637,11 +2923,11 @@
           this.regionForm.city = candidate.finalLocation && candidate.finalLocation.city ? candidate.finalLocation.city : '';
           this.regionForm.district = candidate.finalLocation && candidate.finalLocation.district ? candidate.finalLocation.district : '';
           this.regionForm.detailAddress = candidate.detailAddress || '';
-          this.regionDisplayText = candidate.regionText || [
+          this.regionDisplayText = candidate.regionText || this.getRegionParts(
             this.regionForm.province,
             this.regionForm.city,
             this.regionForm.district
-          ].filter(Boolean).join(' ');
+          ).join(' ');
           this.activeTab = 'region';
         }
 
@@ -2682,25 +2968,24 @@
         };
 
         var source = text || '';
+        var remain = source;
 
         var provinceMatch = source.match(/(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区|内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区|[^省]+省)/);
         if (provinceMatch) {
-          result.province = provinceMatch[0]
-            .replace('省', '')
-            .replace('市', '')
-            .replace('特别行政区', '')
-            .replace('自治区', '');
+          result.province = this.formatProvinceName(provinceMatch[0]);
+          remain = remain.replace(provinceMatch[0], '');
         }
 
-        var cityMatch = source.match(/([^市]+市|[^州]+州|[^地区]+地区|[^盟]+盟)/);
+        var cityMatch = remain.match(/([^市]+市|[^州]+州|[^地区]+地区|[^盟]+盟)/);
         if (cityMatch) result.city = cityMatch[0];
 
-        var districtMatch = source.match(/([^区]+区|[^县]+县|[^旗]+旗)/);
+        if (result.city) {
+          remain = remain.replace(result.city, '');
+        }
+
+        var districtMatch = remain.match(/([^区]+区|[^县]+县|[^旗]+旗)/);
         if (districtMatch) result.district = districtMatch[0];
 
-        var remain = source;
-        if (provinceMatch) remain = remain.replace(provinceMatch[0], '');
-        if (result.city) remain = remain.replace(result.city, '');
         if (result.district) remain = remain.replace(result.district, '');
 
         var houseMatch = remain.match(/([A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+)$/);
@@ -2709,7 +2994,7 @@
         var streetMatch = source.match(/([^省市区县]+(?:路|街|道|巷))/);
         if (streetMatch) result.street = streetMatch[0];
 
-        var streetNumberMatch = source.match(/(\d+号|\d+弄|\d+栋|\d+幢|\d+单元|\d+室|[A-Za-z0-9\-]+室)/);
+        var streetNumberMatch = source.match(/(\d+号|\d+弄|\d+栋|\d+幢|\d+单元|\d+室|[A-Za-z0-9\-]+室|\b\d{2,}\b)$/);
         if (streetNumberMatch) result.streetNumber = streetNumberMatch[0];
 
         result.name = remain.trim().slice(0, 20);
@@ -2759,7 +3044,7 @@
                 point: poi.point,
                 title: poi.title || '',
                 address: (rs && rs.address) || poi.address || keyword,
-                province: (ac.province || poi.province || '').replace('省', '').replace('市', ''),
+                province: self.formatProvinceName(ac.province || poi.province || ''),
                 city: ac.city || poi.city || '',
                 district: ac.district || poi.district || '',
                 street: ac.street || '',
@@ -2779,7 +3064,7 @@
         var inputCity = parsedInput && parsedInput.city ? parsedInput.city : '';
         var inputDistrict = parsedInput && parsedInput.district ? parsedInput.district : '';
 
-        var finalProvince = finalLocation && finalLocation.province ? String(finalLocation.province).replace('省', '').replace('市', '') : '';
+        var finalProvince = finalLocation && finalLocation.province ? this.formatProvinceName(finalLocation.province) : '';
         var finalCity = finalLocation && finalLocation.city ? finalLocation.city : '';
         var finalDistrict = finalLocation && finalLocation.district ? finalLocation.district : '';
 
@@ -2787,7 +3072,7 @@
           risks.push('输入地址中的省、市、区信息可能不完整');
         }
 
-        if (inputProvince && finalProvince && inputProvince !== finalProvince) {
+        if (inputProvince && finalProvince && this.formatProvinceName(inputProvince) !== finalProvince) {
           risks.push('输入的省份与识别结果不一致：输入为“' + inputProvince + '”，识别为“' + finalProvince + '”');
         }
 
