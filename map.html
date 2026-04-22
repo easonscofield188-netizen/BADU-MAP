@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+  <title>常住地址选择</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #f6f6f6;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      color: #333;
+    }
+
+    body {
+      font-size: 14px;
+    }
+
+    #app {
+      min-height: 100vh;
+      background: #f6f6f6;
+    }
+
+    .page {
+      padding: 16px 12px 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 12px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: #222;
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .value-box,
+    .textarea-box {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #ececec;
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 20px;
+      color: #333;
+      word-break: break-all;
+    }
+
+    .textarea-box {
+      min-height: 72px;
+      resize: none;
+      outline: none;
+    }
+
+    .placeholder {
+      color: #b8b8b8;
+    }
+
+    .btn-primary {
+      width: 100%;
+      height: 44px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #ff6767 0%, #ff3b30 100%);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .preview-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fafafa;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.85;
+      color: #333;
+    }
+
+    .tag-warning {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #fffbe6;
+      border: 1px solid #ffe58f;
+      border-radius: 10px;
+      color: #ad6800;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+    }
+
+    .sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1001;
+      background: #f6f6f6;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      max-height: 90vh;
+      overscroll-behavior: contain;
+      height: 140vw;
+    }
+
+    .sheet-header {
+      height: 48px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      position: relative;
+      padding: 0 16px;
+      font-size: 17px;
+      font-weight: 600;
+      color: #222;
+      border-bottom: 1px solid #f2f2f2;
+    }
+
+    .sheet-close {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 26px;
+      color: #c7c7c7;
+      line-height: 1;
+      cursor: pointer;
+      font-weight: 300;
+    }
+
+    .sheet-body {
+      height: 360px;
+      overflow: auto;
+      margin: 10px;
+    }
+
+    .tabs {
+      display: flex;
+      background: #f1f1f1;
+      border-radius: 14px 14px 0 0;
+      overflow: hidden;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 11px 4px 10px;
+      font-size: 15px;
+      color: #666;
+      line-height: 1.35;
+      background: #f1f1f1;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #fff;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .tab small {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .sheet-card {
+      background: #fff;
+      border-radius: 0 0 16px 16px;
+      padding: 0 14px 12px;
+    }
+
+    .line-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #f4f4f4;
+    }
+
+    .align-items-start {
+      align-items: flex-start;
+    }
+
+    .line-row:last-child {
+      border-bottom: none;
+    }
+
+    .line-label {
+      width: 72px;
+      flex-shrink: 0;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .line-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .address-empty {
+      font-size: 15px;
+      color: #b9b9b9;
+      line-height: 1.4;
+    }
+
+    .address-title {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.45;
+      word-break: break-all;
+      display: flex;
+      flex-flow: column;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .address-title .province-group {
+      margin-top: 4px;
+      font-size: 13px;
+      color: #8d8d8d;
+    }
+
+    .map-thumb {
+      width: 76px;
+      height: 50px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background: #f7f7f7;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .map-thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(0deg, rgba(255,255,255,0.15), rgba(255,255,255,0.15)),
+        url("./index-location-icon.png") center center / 24px 24px no-repeat,
+        linear-gradient(135deg, #eef8ef 0%, #f8faf8 100%);
+    }
+
+    .location-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .location-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .location-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .location-address {
+      margin-top: 4px;
+      font-size: 13px;
+      color: #8d8d8d;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .btn-use {
+      width: 56px;
+      height: 32px;
+      flex-shrink: 0;
+      border: 1px solid #666;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .door-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .region-row {
+      display: flex;
+      align-items: center;
+      min-height: 22px;
+      color: #333;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .region-row.placeholder {
+      color: #b9b9b9;
+    }
+
+    .region-arrow-right {
+      margin-left: auto;
+      width: 8px;
+      height: 8px;
+      border-top: 1.5px solid #999;
+      border-right: 1.5px solid #999;
+      transform: rotate(45deg);
+      flex-shrink: 0;
+    }
+
+    .region-detail-wrap {
+      display: flex;
+      align-items: center;
+      min-height: 22px;
+    }
+
+    .region-detail-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 15px;
+      color: #333;
+      padding: 0;
+    }
+
+
+    .paste-wrap {
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .paste-panel {
+      background: #fff;
+      border-top: 1px solid #f2f2f2;
+      padding-top: 12px;
+    }
+
+    .paste-box {
+      position: relative;
+      background: #f8f8f8;
+      border: 1px solid #f0f0f0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    textarea::placeholder {
+      font-size: 13px;
+      color: #b9b9b9;
+    }
+    .paste-textarea::-webkit-input-placeholder {
+      font-size: 13px;
+      color: #b9b9b9;
+    }
+
+    .paste-textarea {
+      width: 100%;
+      min-height: 116px;
+      border: none;
+      outline: none;
+      resize: none;
+      border-radius: 0;
+      padding: 12px 12px 46px;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.6;
+      background: #f8f8f8;
+    }
+
+    .paste-actions {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .paste-action-btn {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      line-height: 20px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .paste-action-btn.clear-btn {
+      color: #999;
+    }
+
+    .paste-action-btn.submit-btn {
+      width: 54px;
+      height: 28px;
+      border-radius: 6px;
+      background: linear-gradient(180deg, #ff6666 0%, #ff3434 100%);
+      color: #fff;
+    }
+
+    .clipboard-bar {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .risk-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #fff2f0;
+      border: 1px solid #ffccc7;
+      border-radius: 10px;
+      color: #cf1322;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .sheet-footer {
+      padding: 12px 10px;
+      padding-bottom: 42px;
+      position: absolute;
+      width: 100vw;
+      bottom: 0;
+      background-color: #fff
+    }
+
+    .full-page {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .full-header,
+    .search-page-header {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #fff;
+      border-bottom: 1px solid #f2f2f2;
+      font-size: 18px;
+      font-weight: 600;
+      flex-shrink: 0;
+      color: #222;
+    }
+
+    .back-btn,
+    .search-back-btn {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 12px;
+      height: 12px;
+      border-left: 2px solid #c32026;
+      border-bottom: 2px solid #c32026;
+      transform-origin: center;
+      cursor: pointer;
+    }
+
+    .back-btn {
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .search-back-btn {
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .search-wrap {
+      background: #fff;
+      padding: 10px 12px 12px;
+      border-bottom: 1px solid #f5f5f5;
+      flex-shrink: 0;
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .city-name {
+      font-size: 16px;
+      color: #333;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .search-box {
+      flex: 1;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      background: #f4f4f6;
+      border-radius: 10px;
+      padding: 0 10px;
+    }
+
+    .search-icon {
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
+      background: url("./research-icon.png") center center / 18px 18px no-repeat;
+      flex-shrink: 0;
+      opacity: 0.75;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .map-area {
+      height: 320px;
+      position: relative;
+      background: #e8eef3;
+      flex-shrink: 0;
+    }
+
+    .map-box-full {
+      width: 100%;
+      height: 100%;
+    }
+
+    .center-marker {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 28px;
+      height: 38px;
+      transform: translate(-50%, -100%);
+      z-index: 2;
+      pointer-events: none;
+      background: url("./research-location-icon.png") center center / 48px 48px no-repeat;
+    }
+
+    .map-locate-btn {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      z-index: 3;
+      cursor: pointer;
+    }
+
+    .nearby-list,
+    .search-result-list {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .nearby-item,
+    .search-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 12px;
+      border-bottom: 1px solid #f3f3f3;
+      cursor: pointer;
+    }
+
+    .nearby-left,
+    .search-item-left {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .nearby-icon,
+    .search-item-icon {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 18px 18px;
+    }
+
+    .nearby-icon.active {
+      background-image: url("./research-list-location-icon.png");
+    }
+
+    .nearby-icon.normal,
+    .search-item-icon {
+      background-image: url("./research-list-location-gray-icon.png");
+    }
+
+    .nearby-name,
+    .search-item-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.45;
+    }
+
+    .search-item-name .match-text {
+      color: #d73a32;
+    }
+
+    .nearby-address,
+    .search-item-address {
+      margin-top: 2px;
+      font-size: 13px;
+      color: #888;
+      line-height: 1.55;
+      word-break: break-all;
+    }
+
+    .nearby-distance,
+    .search-item-distance {
+      flex-shrink: 0;
+      font-size: 12px;
+      color: #999;
+      margin-top: 3px;
+    }
+
+    .search-page {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 1150;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-page-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    .search-page-box-wrap {
+      padding: 14px 14px 10px;
+      background: #fff;
+    }
+
+    .search-page-box {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      background: #f4f4f6;
+      border-radius: 8px;
+      padding: 0 10px;
+    }
+
+    .search-page-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .search-empty {
+      padding: 60px 20px;
+      text-align: center;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .search-tip-bottom {
+      padding: 12px 16px 18px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #999;
+      text-align: center;
+      border-top: 1px solid #f5f5f5;
+      flex-shrink: 0;
+      background: #fff;
+    }
+
+    .confirm-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background: rgba(0, 0, 0, 0.48);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .confirm-dialog {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .confirm-header {
+      padding: 16px 16px 8px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #cf1322;
+    }
+
+    .confirm-body {
+      padding: 0 16px 16px;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.8;
+    }
+
+    .confirm-list {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #fff2f0;
+      border: 1px solid #ffccc7;
+      border-radius: 10px;
+      color: #cf1322;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .confirm-footer {
+      display: flex;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .confirm-btn {
+      flex: 1;
+      height: 48px;
+      border: none;
+      background: #fff;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .confirm-btn + .confirm-btn {
+      border-left: 1px solid #f0f0f0;
+    }
+
+    .confirm-btn.cancel {
+      color: #666;
+    }
+
+    .confirm-btn.ok {
+      color: #ff4d4f;
+      font-weight: 600;
+    }
+
+    .region-selector-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 1160;
+      background: rgba(0, 0, 0, 0.38);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .region-selector-panel {
+      width: 100%;
+      height: 80vh;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      overscroll-behavior: contain;
+    }
+
+    .region-selector-header {
+      position: relative;
+      height: 56px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #f5f5f5;
+      background: #fff;
+    }
+
+    .region-top-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+    }
+
+    .region-top-tab {
+      position: relative;
+      font-size: 16px;
+      color: #666;
+      padding: 0 2px 8px;
+      cursor: pointer;
+    }
+
+    .region-top-tab.active {
+      color: #222;
+      font-weight: 600;
+    }
+
+    .region-top-tab.active::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 24px;
+      height: 2px;
+      background: #ff4d4f;
+      border-radius: 2px;
+      transform: translateX(-50%);
+    }
+
+    .region-selector-close {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 24px;
+      color: #aaa;
+      line-height: 1;
+      cursor: pointer;
+      font-weight: 300;
+    }
+
+    .region-selector-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      position: relative;
+    }
+
+    .region-hot-block {
+      padding: 16px 12px 6px;
+      flex-shrink: 0;
+    }
+
+    .region-block-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 12px;
+    }
+
+    .hot-city-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 10px;
+    }
+
+    .hot-city-item {
+      min-width: 70px;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 4px;
+      background: #f7f7f7;
+      color: #333;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .region-selected-bar {
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid #f5f5f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .region-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 4px;
+      border: 1px solid #ff8a8a;
+      color: #ff4d4f;
+      font-size: 14px;
+      background: #fff5f5;
+      cursor: pointer;
+    }
+
+    .region-list-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 28px 16px 0;
+      position: relative;
+    }
+
+    .region-group {
+      padding-left: 12px;
+    }
+
+    .region-group-letter {
+      font-size: 22px;
+      color: #888;
+      line-height: 32px;
+      padding-top: 6px;
+    }
+
+    .region-list-item {
+      padding: 12px 0;
+      font-size: 16px;
+      color: #333;
+      border-bottom: 1px solid #f7f7f7;
+      cursor: pointer;
+    }
+
+    .region-list-item.active {
+      color: #ff4d4f;
+      font-weight: 600;
+    }
+
+    .region-side-index {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .region-side-index span {
+      font-size: 11px;
+      color: #999;
+      line-height: 14px;
+      text-align: center;
+    }
+
+    .oversea-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0 16px;
+    }
+
+    .oversea-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f6f6f6;
+      font-size: 16px;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .oversea-item.active {
+      color: #ff4d4f;
+      font-weight: 600;
+    }
+
+    /* ===== 动画 ===== */
+    .fade-mask-enter-active,
+    .fade-mask-leave-active {
+      transition: opacity 0.22s ease;
+    }
+
+    .fade-mask-enter,
+    .fade-mask-leave-to {
+      opacity: 0;
+    }
+
+    .slide-up-sheet-enter-active,
+    .slide-up-sheet-leave-active {
+      transition: transform 0.28s cubic-bezier(.36, .66, .04, 1), opacity 0.28s ease;
+      will-change: transform, opacity;
+    }
+
+    .slide-up-sheet-enter,
+    .slide-up-sheet-leave-to {
+      transform: translate3d(0, 100%, 0);
+      opacity: 0.98;
+    }
+
+    .slide-left-page-enter-active,
+    .slide-left-page-leave-active {
+      transition: transform 0.3s cubic-bezier(.36, .66, .04, 1), opacity 0.3s ease;
+      will-change: transform, opacity;
+    }
+
+    .slide-left-page-enter,
+    .slide-left-page-leave-to {
+      transform: translate3d(100%, 0, 0);
+      opacity: 1;
+    }
+
+    .fade-tab-enter-active,
+    .fade-tab-leave-active {
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .fade-tab-enter,
+    .fade-tab-leave-to {
+      opacity: 0;
+      transform: translate3d(0, 8px, 0);
+    }
+
+    .full-page,
+    .search-page,
+    .sheet,
+    .region-selector-panel,
+    .confirm-dialog {
+      will-change: transform, opacity;
+    }
+
+    .confirm-mask .confirm-dialog {
+      transform: scale(1);
+      transition: transform 0.22s ease, opacity 0.22s ease;
+    }
+
+    .fade-mask-enter .confirm-dialog,
+    .fade-mask-leave-to .confirm-dialog {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="page">
+    <div class="card">
+      <div class="title">个人信息</div>
+
+      <div class="field">
+        <div class="label">常住地址</div>
+        <div class="value-box">
+          <span v-if="form.fullAddress">{{ form.fullAddress }}</span>
+          <span v-else class="placeholder">请点击按钮选择常住地址</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">省 / 市 / 区</div>
+        <div class="value-box">
+          {{ form.province || '-' }} {{ form.city || '' }} {{ form.district || '' }}
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">门牌号 / 详细补充地址</div>
+        <textarea
+          class="textarea-box"
+          v-model.trim="form.detailAddress"
+          placeholder="例如：6栋201室"
+        ></textarea>
+      </div>
+
+      <div class="field">
+        <div class="label">经纬度</div>
+        <div class="value-box">
+          {{ form.lng || '-' }} {{ form.lat ? (' / ' + form.lat) : '' }}
+        </div>
+      </div>
+
+      <button class="btn-primary" @click="openAddressSheet">选择常住地址</button>
+    </div>
+
+    <div class="card" v-if="selectedLocation.point || selectedLocation.address || regionDisplayText" style="margin-top:12px;">
+      <div class="title" style="margin-bottom:10px;">当前选中地址</div>
+      <div class="preview-box">
+        <div><strong>名称：</strong>{{ selectedLocation.title || regionDisplayText || '-' }}</div>
+        <div><strong>完整地址：</strong>{{ selectedLocation.address || (composeRegionFullAddress() || '-') }}</div>
+        <div><strong>省：</strong>{{ selectedLocation.province || regionForm.province || '-' }}</div>
+        <div><strong>市：</strong>{{ selectedLocation.city || regionForm.city || '-' }}</div>
+        <div><strong>区：</strong>{{ selectedLocation.district || regionForm.district || '-' }}</div>
+        <div><strong>街道：</strong>{{ selectedLocation.street || '-' }}</div>
+        <div><strong>街道号：</strong>{{ selectedLocation.streetNumber || '-' }}</div>
+        <div><strong>坐标：</strong>{{ selectedLocation.point ? selectedLocation.point.lng : '-' }} / {{ selectedLocation.point ? selectedLocation.point.lat : '-' }}</div>
+      </div>
+
+      <div v-if="riskConfirmed" class="tag-warning">
+        当前地址存在异常，但已由用户确认继续使用。
+      </div>
+    </div>
+  </div>
+
+  <transition name="fade-mask">
+    <div class="mask" v-show="showAddressSheet"></div>
+  </transition>
+
+  <transition name="slide-up-sheet">
+    <div class="sheet" v-show="showAddressSheet">
+      <div class="sheet-header">
+        请选择常住地址
+        <div class="sheet-close" @click="closeAddressSheet">×</div>
+      </div>
+
+      <div class="sheet-body">
+        <div class="tabs">
+          <div
+            class="tab"
+            :class="{ active: activeTab === 'map' }"
+            @click="switchMainTab('map')"
+          >地图选址</div>
+          <div
+            class="tab"
+            :class="{ active: activeTab === 'region' }"
+            @click="switchMainTab('region')"
+          >
+            地区选址
+            <small>（含港澳台）</small>
+          </div>
+        </div>
+
+        <div class="sheet-card">
+          <transition name="fade-tab" mode="out-in">
+            <div :key="activeTab">
+              <!-- 地图选址 -->
+              <template v-if="activeTab === 'map'">
+                <div :class="['line-row', sheetAddressTitle && sheetProviceCityDistrict ? 'align-items-start' : '']">
+                  <div class="line-label">地址</div>
+                  <div class="line-main" style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex:1; min-width:0;">
+                      <div v-if="sheetAddressTitle && sheetProviceCityDistrict" class="address-title">
+                        <span>{{ sheetAddressTitle }}</span>
+                        <span class="province-group">{{ sheetProviceCityDistrict }}</span>
+                      </div>
+                      <div v-else class="address-empty">选择收货地址</div>
+                    </div>
+                    <div class="map-thumb" @click="openLocationPicker"></div>
+                  </div>
+                </div>
+
+                <div class="line-row" style="padding-top:0;" v-if="!(sheetAddressTitle && sheetProviceCityDistrict)">
+                  <div class="line-label"></div>
+                  <div class="line-main">
+                    <div class="location-box">
+                      <div class="location-left">
+                        <div class="location-name">{{ currentLocation.name || '定位中...' }}</div>
+                        <div class="location-address">{{ currentLocation.address || '正在获取当前位置' }}</div>
+                      </div>
+                      <button class="btn-use" @click="useCurrentLocation">使用</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="line-row">
+                  <div class="line-label">门牌号</div>
+                  <div class="line-main">
+                    <input
+                      class="door-input"
+                      v-model.trim="sheetDoorNumber"
+                      placeholder="例：6栋201室"
+                    />
+                  </div>
+                </div>
+
+              </template>
+
+              <!-- 地区选址 -->
+              <template v-if="activeTab === 'region'">
+                <div class="line-row">
+                  <div class="line-label">所在地区</div>
+                  <div class="line-main">
+                    <div
+                      class="region-row"
+                      :class="{ placeholder: !regionDisplayText }"
+                      @click="openRegionSelector"
+                    >
+                      <span>{{ regionDisplayText || '省、市、区' }}</span>
+                      <span class="region-arrow-right"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="line-row">
+                  <div class="line-label">详细地址</div>
+                  <div class="line-main">
+                    <div class="region-detail-wrap">
+                      <input
+                        class="region-detail-input"
+                        v-model.trim="regionForm.detailAddress"
+                        placeholder="小区、门牌号"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </template>
+            </div>
+          </transition>
+
+          <div class="paste-wrap">
+            <div class="paste-panel">
+              <div class="paste-box">
+                <textarea
+                  v-model.trim="pasteText"
+                  class="paste-textarea"
+                  :placeholder="activeTab === 'map'
+                    ? '试试粘贴你的常用地址，包含省市区以及街道的详细地址，可快速识别您的地址信息'
+                    : '试试粘贴收件人姓名、手机号、收货地址，可快速识别您的收货信息'"
+                ></textarea>
+
+                <div class="paste-actions">
+                  <button class="paste-action-btn clear-btn" @click="clearPasteText">清除</button>
+                  <button class="paste-action-btn submit-btn" @click="parsePastedAddress">提交</button>
+                </div>
+              </div>
+
+              <div v-if="addressRiskList.length" class="risk-box">
+                <div style="font-weight:600; margin-bottom:4px;">地址异常提示</div>
+                <div v-for="(item, index) in addressRiskList" :key="'paste-risk-' + index">- {{ item }}</div>
+              </div>
+
+              <div class="clipboard-bar">
+                <span>地址粘贴板 ^</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-footer">
+        <button class="btn-primary" @click="confirmSheetAddress">确认</button>
+      </div>
+    </div>
+  </transition>
+
+  <!-- 地图选址全屏页 -->
+  <transition name="slide-left-page">
+    <div class="full-page" v-show="showLocationPicker">
+      <div class="full-header">
+        <div class="back-btn" @click="backToAddressSheet"></div>
+        定位地址
+      </div>
+
+      <div class="search-wrap">
+        <div class="search-row">
+          <div class="city-name">{{ pickerCityText || '当前城市' }} ▾</div>
+          <div class="search-box" @click="openSearchPage">
+            <div class="search-icon"></div>
+            <input
+              class="search-input"
+              :value="pickerKeyword"
+              placeholder="输入小区/写字楼等"
+              readonly
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="map-area">
+        <div ref="pickerMap" class="map-box-full"></div>
+        <div class="center-marker"></div>
+        <div class="map-locate-btn" @click="fetchCurrentLocationForPicker"></div>
+      </div>
+
+      <div class="nearby-list">
+        <div
+          class="nearby-item"
+          v-for="(item, index) in nearbyList"
+          :key="'nearby-' + index"
+          @click="chooseNearbyItem(item)"
+        >
+          <div class="nearby-left">
+            <div class="nearby-icon" :class="index === 0 ? 'active' : 'normal'"></div>
+            <div style="min-width:0; flex:1;">
+              <div class="nearby-name">{{ item.title || '未知地点' }}</div>
+              <div class="nearby-address">{{ item.address || '-' }}</div>
+            </div>
+          </div>
+          <div class="nearby-distance" v-if="item.distanceText">{{ item.distanceText }}</div>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- 搜索地址页 -->
+  <transition name="slide-left-page">
+    <div class="search-page" v-show="showSearchPage">
+      <div class="search-page-header">
+        <div class="search-back-btn" @click="closeSearchPage"></div>
+        搜索地址
+      </div>
+
+      <div class="search-page-body">
+        <div class="search-page-box-wrap">
+          <div class="search-page-box">
+            <div class="search-icon"></div>
+            <input
+              ref="searchInput"
+              class="search-page-input"
+              v-model.trim="searchPageKeyword"
+              placeholder="输入小区/写字楼等"
+              @input="onSearchPageInput"
+            />
+          </div>
+        </div>
+
+        <div class="search-result-list" v-if="searchResultList.length">
+          <div
+            class="search-item"
+            v-for="(item, index) in searchResultList"
+            :key="'search-' + index"
+            @click="chooseSearchResult(item)"
+          >
+            <div class="search-item-left">
+              <div class="search-item-icon"></div>
+              <div style="min-width:0; flex:1;">
+                <div class="search-item-name" v-html="highlightKeyword(item.title, searchPageKeyword)"></div>
+                <div class="search-item-address">{{ item.address || '-' }}</div>
+              </div>
+            </div>
+            <div class="search-item-distance" v-if="item.distanceText">{{ item.distanceText }}</div>
+          </div>
+        </div>
+
+        <div class="search-empty" v-else>
+          {{ searchPageKeyword ? '未搜索到相关地址' : '请输入关键词搜索地址' }}
+        </div>
+
+        <div class="search-tip-bottom">
+          如果找不到地址，请尝试只输入小区、写字楼或学校名称，<br />
+          门牌号可稍后输入哦。
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- 地区选择弹层 -->
+  <transition name="fade-mask">
+    <div class="region-selector-mask" v-show="showRegionSelector">
+      <transition name="slide-up-sheet">
+        <div class="region-selector-panel" v-show="showRegionSelector">
+          <div class="region-selector-header">
+            <div class="region-top-tabs">
+              <div
+                class="region-top-tab"
+                :class="{ active: regionSelectorTab === 'domestic' }"
+                @click="switchRegionSelectorTab('domestic')"
+              >中国境内</div>
+              <div
+                class="region-top-tab"
+                :class="{ active: regionSelectorTab === 'oversea' }"
+                @click="switchRegionSelectorTab('oversea')"
+              >港澳台及海外</div>
+            </div>
+            <div class="region-selector-close" @click="closeRegionSelector">×</div>
+          </div>
+
+          <div class="region-selector-body" v-if="regionSelectorTab === 'domestic'">
+            <template v-if="regionStep === 'province'">
+              <div class="region-hot-block">
+                <div class="region-block-title">热门城市</div>
+                <div class="hot-city-grid">
+                  <div
+                    class="hot-city-item"
+                    v-for="item in hotCityList"
+                    :key="'hot-' + item.city"
+                    @click="selectHotCity(item)"
+                  >
+                    {{ item.city }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="region-hot-block" style="padding-top:10px; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:8px;">选择省份/地区</div>
+              </div>
+
+              <div class="region-list-wrap">
+                <div
+                  class="region-group"
+                  v-for="group in groupedProvinceList"
+                  :key="'province-group-' + group.letter"
+                >
+                  <div class="region-group-letter">{{ group.letter }}</div>
+                  <div
+                    class="region-list-item"
+                    v-for="item in group.list"
+                    :key="'province-' + item.name"
+                    @click="selectProvince(item.name)"
+                  >
+                    {{ item.name }}
+                  </div>
+                </div>
+
+                <div class="region-side-index">
+                  <span v-for="letter in provinceLetterList" :key="'p-index-' + letter">{{ letter }}</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="regionStep === 'city'">
+              <div class="region-selected-bar">
+                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
+              </div>
+
+              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
+              </div>
+
+              <div class="region-list-wrap">
+                <div
+                  class="region-group"
+                  v-for="group in groupedCityList"
+                  :key="'city-group-' + group.letter"
+                >
+                  <div class="region-group-letter">{{ group.letter }}</div>
+                  <div
+                    class="region-list-item"
+                    :class="{ active: regionTemp.city === item.name }"
+                    v-for="item in group.list"
+                    :key="'city-' + item.name"
+                    @click="selectCity(item.name)"
+                  >
+                    {{ item.name }}
+                  </div>
+                </div>
+
+                <div class="region-side-index">
+                  <span v-for="letter in cityLetterList" :key="'c-index-' + letter">{{ letter }}</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="regionStep === 'district'">
+              <div class="region-selected-bar">
+                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
+                <div class="region-chip" @click="goBackToCityStep">{{ regionTemp.city }}</div>
+              </div>
+
+              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
+              </div>
+
+              <div class="region-list-wrap">
+                <div
+                  class="region-group"
+                  v-for="group in groupedDistrictList"
+                  :key="'district-group-' + group.letter"
+                >
+                  <div class="region-group-letter">{{ group.letter }}</div>
+                  <div
+                    class="region-list-item"
+                    :class="{ active: regionTemp.district === item.name }"
+                    v-for="item in group.list"
+                    :key="'district-' + item.name"
+                    @click="selectDistrict(item.name)"
+                  >
+                    {{ item.name }}
+                  </div>
+                </div>
+
+                <div class="region-side-index">
+                  <span v-for="letter in districtLetterList" :key="'d-index-' + letter">{{ letter }}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="region-selector-body" v-if="regionSelectorTab === 'oversea'">
+            <div class="oversea-list">
+              <div
+                class="oversea-item"
+                v-for="item in overseaList"
+                :key="'os-' + item"
+                :class="{ active: regionDisplayText === item }"
+                @click="selectOverseaRegion(item)"
+              >
+                {{ item }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </div>
+  </transition>
+
+  <!-- 风险确认弹层 -->
+  <transition name="fade-mask">
+    <div class="confirm-mask" v-show="showRiskConfirm">
+      <div class="confirm-dialog">
+        <div class="confirm-header">检测到地址异常</div>
+        <div class="confirm-body">
+          当前地址存在以下异常，请确认是否继续使用。
+          <div class="confirm-list">
+            <div v-for="(item, index) in addressRiskList" :key="'confirm-' + index">- {{ item }}</div>
+          </div>
+        </div>
+        <div class="confirm-footer">
+          <button class="confirm-btn cancel" @click="cancelRiskConfirm">返回修改</button>
+          <button class="confirm-btn ok" @click="continueRiskConfirm">继续使用</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
+<script src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=HgjE1KgxQkaoM0G66LUd1kQ1TpPBpQg5"></script>
+<script>
+  new Vue({
+    el: '#app',
+    data: function () {
+      return {
+        activeTab: 'map',
+
+        showAddressSheet: false,
+        showLocationPicker: false,
+        showSearchPage: false,
+        showRiskConfirm: false,
+        showRegionSelector: false,
+
+        sheetProviceCityDistrict: '', // 地图选址页显示的省市区文本
+
+        geolocation: null,
+        geocoder: null,
+
+        pickerMapInstance: null,
+        pickerGeocoder: null,
+        pickerSearchTimer: null,
+        searchPageTimer: null,
+
+        currentLocation: {
+          point: null,
+          title: '',
+          name: '',
+          address: '',
+          province: '',
+          city: '',
+          district: '',
+          street: '',
+          streetNumber: ''
+        },
+
+        selectedLocation: {
+          point: null,
+          title: '',
+          name: '',
+          address: '',
+          province: '',
+          city: '',
+          district: '',
+          street: '',
+          streetNumber: ''
+        },
+
+        sheetAddressTitle: '',
+        sheetAddressText: '',
+        sheetDoorNumber: '',
+
+        pasteText: '',
+
+        pickerKeyword: '',
+        pickerCityText: '',
+        nearbyList: [],
+
+        searchPageKeyword: '',
+        searchResultList: [],
+
+        addressRiskList: [],
+        addressRiskText: '',
+        riskConfirmed: false,
+
+        pendingPayload: null,
+
+        regionDisplayText: '',
+        regionForm: {
+          province: '',
+          city: '',
+          district: '',
+          detailAddress: ''
+        },
+
+        regionSelectorTab: 'domestic',
+        regionStep: 'province',
+        regionTemp: {
+          province: '',
+          city: '',
+          district: ''
+        },
+
+        hotCityList: [
+          { province: '北京', city: '北京市', district: '朝阳区' },
+          { province: '上海', city: '上海市', district: '浦东新区' },
+          { province: '广东', city: '广州市', district: '天河区' },
+          { province: '广东', city: '深圳市', district: '南山区' },
+          { province: '浙江', city: '杭州市', district: '西湖区' },
+          { province: '江苏', city: '南京市', district: '玄武区' },
+          { province: '江苏', city: '苏州市', district: '姑苏区' },
+          { province: '天津', city: '天津市', district: '和平区' },
+          { province: '湖北', city: '武汉市', district: '武昌区' },
+          { province: '湖南', city: '长沙市', district: '岳麓区' }
+        ],
+
+        overseaList: [
+          '香港特别行政区',
+          '澳门特别行政区',
+          '台湾省',
+          '新加坡',
+          '日本',
+          '韩国',
+          '美国',
+          '加拿大',
+          '英国',
+          '澳大利亚'
+        ],
+
+        provinceList: [
+          { name: '安徽', letter: 'A' },
+          { name: '北京', letter: 'B' },
+          { name: '重庆', letter: 'C' },
+          { name: '福建', letter: 'F' },
+          { name: '甘肃', letter: 'G' },
+          { name: '广东', letter: 'G' },
+          { name: '广西', letter: 'G' },
+          { name: '贵州', letter: 'G' },
+          { name: '海南', letter: 'H' },
+          { name: '河北', letter: 'H' },
+          { name: '河南', letter: 'H' },
+          { name: '黑龙江', letter: 'H' },
+          { name: '湖北', letter: 'H' },
+          { name: '湖南', letter: 'H' },
+          { name: '吉林', letter: 'J' },
+          { name: '江苏', letter: 'J' },
+          { name: '江西', letter: 'J' },
+          { name: '辽宁', letter: 'L' },
+          { name: '内蒙古', letter: 'N' },
+          { name: '宁夏', letter: 'N' },
+          { name: '青海', letter: 'Q' },
+          { name: '山东', letter: 'S' },
+          { name: '山西', letter: 'S' },
+          { name: '陕西', letter: 'S' },
+          { name: '上海', letter: 'S' },
+          { name: '四川', letter: 'S' },
+          { name: '天津', letter: 'T' },
+          { name: '西藏', letter: 'X' },
+          { name: '新疆', letter: 'X' },
+          { name: '云南', letter: 'Y' },
+          { name: '浙江', letter: 'Z' }
+        ],
+
+        cityData: {
+          '安徽': ['合肥市', '芜湖市', '蚌埠市', '淮南市', '马鞍山市', '铜陵市', '安庆市', '黄山市', '滁州市', '阜阳市', '宿州市', '六安市', '亳州市', '池州市', '宣城市'],
+          '北京': ['北京市'],
+          '重庆': ['重庆市'],
+          '福建': ['福州市', '厦门市', '泉州市', '漳州市', '莆田市', '三明市', '南平市', '龙岩市', '宁德市'],
+          '甘肃': ['兰州市', '天水市', '酒泉市', '嘉峪关市', '张掖市', '武威市', '庆阳市', '平凉市', '定西市', '陇南市'],
+          '广东': ['广州市', '深圳市', '珠海市', '佛山市', '东莞市', '中山市', '惠州市', '汕头市', '湛江市', '江门市', '肇庆市', '茂名市', '揭阳市', '清远市'],
+          '广西': ['南宁市', '柳州市', '桂林市', '北海市', '梧州市', '玉林市', '百色市', '河池市', '钦州市', '防城港市', '贵港市'],
+          '贵州': ['贵阳市', '遵义市', '六盘水市', '安顺市', '毕节市', '铜仁市'],
+          '海南': ['海口市', '三亚市', '三沙市', '儋州市'],
+          '河北': ['石家庄市', '唐山市', '保定市', '廊坊市', '秦皇岛市', '邯郸市', '邢台市', '沧州市', '衡水市', '张家口市', '承德市'],
+          '河南': ['郑州市', '洛阳市', '开封市', '新乡市', '南阳市', '许昌市', '平顶山市', '安阳市', '商丘市', '信阳市', '周口市', '驻马店市'],
+          '黑龙江': ['哈尔滨市', '齐齐哈尔市', '牡丹江市', '佳木斯市', '大庆市'],
+          '湖北': ['武汉市', '宜昌市', '襄阳市', '黄石市', '荆州市', '十堰市', '孝感市', '黄冈市', '咸宁市'],
+          '湖南': ['长沙市', '株洲市', '湘潭市', '衡阳市', '岳阳市', '常德市', '郴州市', '益阳市', '邵阳市', '怀化市', '永州市'],
+          '吉林': ['长春市', '吉林市', '延边州', '四平市', '通化市'],
+          '江苏': ['南京市', '无锡市', '徐州市', '常州市', '苏州市', '南通市', '连云港市', '淮安市', '盐城市', '扬州市', '镇江市', '泰州市', '宿迁市'],
+          '江西': ['南昌市', '九江市', '赣州市', '上饶市', '宜春市', '吉安市', '抚州市', '景德镇市', '萍乡市'],
+          '辽宁': ['沈阳市', '大连市', '鞍山市', '抚顺市', '本溪市', '丹东市', '锦州市', '营口市'],
+          '内蒙古': ['呼和浩特市', '包头市', '赤峰市', '鄂尔多斯市', '通辽市', '呼伦贝尔市'],
+          '宁夏': ['银川市', '石嘴山市', '吴忠市', '固原市', '中卫市'],
+          '青海': ['西宁市', '海东市'],
+          '山东': ['济南市', '青岛市', '烟台市', '潍坊市', '淄博市', '临沂市', '济宁市', '威海市', '东营市'],
+          '山西': ['太原市', '大同市', '运城市', '长治市', '晋中市', '临汾市'],
+          '陕西': ['西安市', '咸阳市', '宝鸡市', '渭南市', '汉中市', '榆林市', '延安市'],
+          '上海': ['上海市'],
+          '四川': ['成都市', '绵阳市', '德阳市', '乐山市', '宜宾市', '南充市', '泸州市', '自贡市'],
+          '天津': ['天津市'],
+          '西藏': ['拉萨市', '日喀则市'],
+          '新疆': ['乌鲁木齐市', '克拉玛依市', '喀什地区', '伊犁州'],
+          '云南': ['昆明市', '曲靖市', '大理州', '玉溪市', '红河州', '丽江市'],
+          '浙江': ['杭州市', '湖州市', '嘉兴市', '金华市', '丽水市', '宁波市', '衢州市', '绍兴市', '台州市', '温州市', '舟山市']
+        },
+
+        districtData: {
+          '北京市': ['东城区', '西城区', '朝阳区', '海淀区', '丰台区', '通州区', '昌平区'],
+          '上海市': ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '浦东新区', '闵行区'],
+          '广州市': ['越秀区', '海珠区', '天河区', '白云区', '番禺区', '黄埔区'],
+          '深圳市': ['福田区', '罗湖区', '南山区', '宝安区', '龙岗区', '龙华区'],
+          '杭州市': ['上城区', '拱墅区', '西湖区', '滨江区', '萧山区', '余杭区', '临平区'],
+          '南京市': ['玄武区', '秦淮区', '建邺区', '鼓楼区', '栖霞区', '江宁区'],
+          '苏州市': ['姑苏区', '虎丘区', '吴中区', '相城区', '吴江区', '工业园区'],
+          '天津市': ['和平区', '河东区', '河西区', '南开区', '河北区', '滨海新区'],
+          '武汉市': ['江岸区', '江汉区', '武昌区', '洪山区', '汉阳区', '东西湖区'],
+          '长沙市': ['芙蓉区', '天心区', '岳麓区', '开福区', '雨花区', '望城区'],
+          '宁波市': ['海曙区', '江北区', '镇海区', '鄞州区', '奉化区', '北仑区'],
+          '温州市': ['鹿城区', '龙湾区', '瓯海区', '洞头区', '永嘉县', '瑞安市'],
+          '嘉兴市': ['南湖区', '秀洲区', '海宁市', '桐乡市'],
+          '绍兴市': ['越城区', '柯桥区', '上虞区', '诸暨市'],
+          '湖州市': ['吴兴区', '南浔区', '德清县', '长兴县'],
+          '金华市': ['婺城区', '金东区', '义乌市', '东阳市'],
+          '台州市': ['椒江区', '黄岩区', '路桥区', '临海市'],
+          '丽水市': ['莲都区', '青田县', '缙云县'],
+          '衢州市': ['柯城区', '衢江区', '江山市'],
+          '舟山市': ['定海区', '普陀区', '岱山县'],
+          '合肥市': ['庐阳区', '蜀山区', '包河区', '瑶海区'],
+          '成都市': ['锦江区', '青羊区', '武侯区', '成华区', '高新区'],
+          '重庆市': ['渝中区', '江北区', '南岸区', '渝北区', '九龙坡区'],
+          '福州市': ['鼓楼区', '台江区', '仓山区', '晋安区'],
+          '厦门市': ['思明区', '湖里区', '集美区', '海沧区'],
+          '西安市': ['新城区', '碑林区', '莲湖区', '雁塔区', '未央区'],
+          '青岛市': ['市南区', '市北区', '崂山区', '黄岛区'],
+          '济南市': ['历下区', '市中区', '槐荫区', '历城区'],
+          '郑州市': ['中原区', '金水区', '二七区', '管城回族区'],
+          '石家庄市': ['长安区', '桥西区', '新华区', '裕华区'],
+          '海口市': ['龙华区', '秀英区', '琼山区', '美兰区'],
+          '南宁市': ['青秀区', '西乡塘区', '兴宁区', '江南区']
+        },
+
+        form: {
+          province: '',
+          city: '',
+          district: '',
+          street: '',
+          streetNumber: '',
+          fullAddress: '',
+          detailAddress: '',
+          lng: '',
+          lat: ''
+        }
+      };
+    },
+
+    computed: {
+      groupedProvinceList: function () {
+        return this.groupByLetter(this.provinceList);
+      },
+      provinceLetterList: function () {
+        return this.groupedProvinceList.map(function (item) {
+          return item.letter;
+        });
+      },
+      currentCityList: function () {
+        var province = this.regionTemp.province;
+        var list = (this.cityData[province] || []).map(function (name) {
+          return {
+            name: name,
+            letter: getLetter(name)
+          };
+        });
+        return list.sort(sortByLetterAndName);
+      },
+      groupedCityList: function () {
+        return this.groupByLetter(this.currentCityList);
+      },
+      cityLetterList: function () {
+        return this.groupedCityList.map(function (item) {
+          return item.letter;
+        });
+      },
+      currentDistrictList: function () {
+        var city = this.regionTemp.city;
+        var list = (this.districtData[city] || []).map(function (name) {
+          return {
+            name: name,
+            letter: getLetter(name)
+          };
+        });
+        return list.sort(sortByLetterAndName);
+      },
+      groupedDistrictList: function () {
+        return this.groupByLetter(this.currentDistrictList);
+      },
+      districtLetterList: function () {
+        return this.groupedDistrictList.map(function (item) {
+          return item.letter;
+        });
+      }
+    },
+
+    methods: {
+      groupByLetter: function (list) {
+        var map = {};
+        (list || []).forEach(function (item) {
+          var letter = item.letter || '#';
+          if (!map[letter]) map[letter] = [];
+          map[letter].push(item);
+        });
+
+        var letters = Object.keys(map).sort();
+        return letters.map(function (letter) {
+          return {
+            letter: letter,
+            list: map[letter]
+          };
+        });
+      },
+
+      switchMainTab: function (tab) {
+        this.activeTab = tab;
+        this.addressRiskList = [];
+        this.addressRiskText = '';
+      },
+
+      clearPasteText: function () {
+        this.pasteText = '';
+        this.addressRiskList = [];
+        this.addressRiskText = '';
+      },
+
+      initBaseServices: function () {
+        if (typeof BMapGL === 'undefined') {
+          alert('百度地图加载失败');
+          return;
+        }
+        if (!this.geolocation) {
+          this.geolocation = new BMapGL.Geolocation();
+        }
+        if (!this.geocoder) {
+          this.geocoder = new BMapGL.Geocoder();
+        }
+      },
+
+      openAddressSheet: function () {
+        this.showAddressSheet = true;
+        this.initBaseServices();
+        this.fetchCurrentLocation();
+      },
+
+      closeAddressSheet: function () {
+        this.showAddressSheet = false;
+      },
+
+      fetchCurrentLocation: function () {
+        var self = this;
+        if (!this.geolocation) return;
+
+        this.geolocation.getCurrentPosition(function (r) {
+          if (this.getStatus && this.getStatus() === 0 && r && r.point) {
+            self.reversePointToAddress(r.point, function (data) {
+              self.currentLocation = data;
+
+              if (!self.selectedLocation.point && !self.selectedLocation.address) {
+                self.selectedLocation = JSON.parse(JSON.stringify(data));
+                self.sheetAddressText = data.address || '';
+              }
+            });
+          } else {
+            self.currentLocation.name = '定位失败';
+            self.currentLocation.address = '请点击右侧地图图标手动选择地址';
+          }
+        }, {
+          enableHighAccuracy: true
+        });
+      },
+
+      reversePointToAddress: function (point, callback) {
+        if (!this.geocoder || !point) return;
+
+        this.geocoder.getLocation(point, function (rs) {
+          if (!rs) return;
+
+          var ac = rs.addressComponents || {};
+          var firstPoi = rs.surroundingPois && rs.surroundingPois[0] ? rs.surroundingPois[0] : null;
+
+          var data = {
+            point: point,
+            title: firstPoi ? firstPoi.title : (ac.street || '当前位置'),
+            name: firstPoi ? firstPoi.title : (ac.street || '当前位置'),
+            address: rs.address || '',
+            province: ac.province || '',
+            city: ac.city || '',
+            district: ac.district || '',
+            street: ac.street || '',
+            streetNumber: ac.streetNumber || ''
+          };
+
+          if (callback) callback(data);
+        });
+      },
+
+      useCurrentLocation: function () {
+        if (!this.currentLocation.point) {
+          alert('当前位置还未获取成功');
+          return;
+        }
+
+        this.selectedLocation = JSON.parse(JSON.stringify(this.currentLocation));
+        const { province, city, district, address, name, title } = this.selectedLocation;
+        this.sheetAddressTitle = title || name || ''; // 具体位置
+        this.sheetAddressText = address || ''; // 详细地址
+        this.sheetProviceCityDistrict = province + ' ' + city + ' ' + district; // 省市区文本
+        this.addressRiskList = [];
+        this.addressRiskText = '';
+        this.riskConfirmed = false;
+        this.activeTab = 'map';
+      },
+
+      openLocationPicker: function () {
+        var self = this;
+        this.showLocationPicker = true;
+
+        this.$nextTick(function () {
+          self.initPickerMap();
+        });
+      },
+
+      backToAddressSheet: function () {
+        this.showLocationPicker = false;
+      },
+
+      initPickerMap: function () {
+        var self = this;
+        var mapEl = this.$refs.pickerMap;
+        if (!mapEl) return;
+
+        if (!this.pickerGeocoder) {
+          this.pickerGeocoder = new BMapGL.Geocoder();
+        }
+
+        if (!this.pickerMapInstance) {
+          this.pickerMapInstance = new BMapGL.Map(mapEl);
+          var defaultPoint = new BMapGL.Point(116.404, 39.915);
+          this.pickerMapInstance.centerAndZoom(defaultPoint, 16);
+          this.pickerMapInstance.enableScrollWheelZoom(true);
+
+          this.pickerMapInstance.addEventListener('moveend', function () {
+            self.loadNearbyByCenter();
+          });
+
+          this.pickerMapInstance.addEventListener('zoomend', function () {
+            self.loadNearbyByCenter();
+          });
+        } else if (typeof this.pickerMapInstance.checkResize === 'function') {
+          this.pickerMapInstance.checkResize();
+        }
+
+        var targetPoint = this.selectedLocation.point || this.currentLocation.point;
+        if (targetPoint) {
+          this.pickerMapInstance.centerAndZoom(targetPoint, 18);
+          this.loadNearbyByCenter();
+        } else {
+          this.fetchCurrentLocationForPicker();
+        }
+      },
+
+      fetchCurrentLocationForPicker: function () {
+        var self = this;
+        if (!this.geolocation) return;
+
+        this.geolocation.getCurrentPosition(function (r) {
+          if (this.getStatus && this.getStatus() === 0 && r && r.point) {
+            self.pickerMapInstance.centerAndZoom(r.point, 18);
+            self.loadNearbyByCenter();
+          }
+        }, {
+          enableHighAccuracy: true
+        });
+      },
+
+      loadNearbyByCenter: function () {
+        var self = this;
+        if (!this.pickerMapInstance || !this.pickerGeocoder) return;
+
+        var center = this.pickerMapInstance.getCenter();
+        if (!center) return;
+
+        this.pickerGeocoder.getLocation(center, function (rs) {
+          if (!rs) return;
+
+          var ac = rs.addressComponents || {};
+          self.pickerCityText = ac.city || ac.province || '当前城市';
+
+          var list = [];
+          var pois = rs.surroundingPois || [];
+
+          list.push({
+            point: center,
+            title: (pois[0] && pois[0].title) || (ac.street || '当前位置'),
+            address: rs.address || '',
+            province: ac.province || '',
+            city: ac.city || '',
+            district: ac.district || '',
+            street: ac.street || '',
+            streetNumber: ac.streetNumber || '',
+            distanceText: ''
+          });
+
+          for (var i = 0; i < pois.length; i++) {
+            var item = pois[i];
+            if (!item || !item.point) continue;
+
+            list.push({
+              point: item.point,
+              title: item.title || '',
+              address: item.address || rs.address || '',
+              province: ac.province || '',
+              city: ac.city || '',
+              district: ac.district || '',
+              street: ac.street || '',
+              streetNumber: ac.streetNumber || '',
+              distanceText: self.calcDistanceText(center, item.point)
+            });
+          }
+
+          self.nearbyList = list;
+        });
+      },
+
+      calcDistanceText: function (p1, p2) {
+        try {
+          var rad = function (d) {
+            return d * Math.PI / 180;
+          };
+          var R = 6378137;
+          var dLat = rad(p2.lat - p1.lat);
+          var dLng = rad(p2.lng - p1.lng);
+          var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(rad(p1.lat)) * Math.cos(rad(p2.lat)) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          var d = Math.round(R * c);
+          return d < 1000 ? (d + 'm') : ((d / 1000).toFixed(1) + 'km');
+        } catch (e) {
+          return '';
+        }
+      },
+
+      chooseNearbyItem: function (item) {
+        if (!item || !item.point) return;
+
+        this.selectedLocation = {
+          point: item.point,
+          title: item.title || '',
+          name: item.title || '',
+          address: item.address || '',
+          province: item.province || '',
+          city: item.city || '',
+          district: item.district || '',
+          street: item.street || '',
+          streetNumber: item.streetNumber || ''
+        };
+
+        this.sheetAddressTitle = this.selectedLocation.title || '';
+        this.sheetAddressText = this.selectedLocation.address || '';
+        this.addressRiskList = [];
+        this.addressRiskText = '';
+        this.riskConfirmed = false;
+        this.showLocationPicker = false;
+        this.showSearchPage = false;
+        this.activeTab = 'map';
+      },
+
+      openSearchPage: function () {
+        this.showSearchPage = true;
+        this.searchPageKeyword = this.pickerKeyword || '';
+        this.searchResultList = [];
+        var self = this;
+        this.$nextTick(function () {
+          if (self.$refs.searchInput) {
+            self.$refs.searchInput.focus();
+          }
+          if (self.searchPageKeyword) {
+            self.searchAddress(self.searchPageKeyword, function (list) {
+              self.searchResultList = list;
+            });
+          }
+        });
+      },
+
+      closeSearchPage: function () {
+        this.showSearchPage = false;
+      },
+
+      onSearchPageInput: function () {
+        var self = this;
+        if (this.searchPageTimer) clearTimeout(this.searchPageTimer);
+
+        if (!this.searchPageKeyword) {
+          this.searchResultList = [];
+          return;
+        }
+
+        this.searchPageTimer = setTimeout(function () {
+          self.searchAddress(self.searchPageKeyword, function (list) {
+            self.searchResultList = list;
+          });
+        }, 300);
+      },
+
+      searchAddress: function (keyword, callback) {
+        var self = this;
+        if (!keyword || !this.pickerMapInstance) {
+          callback([]);
+          return;
+        }
+
+        var localSearch = new BMapGL.LocalSearch(this.pickerMapInstance, {
+          pageCapacity: 20,
+          onSearchComplete: function (results) {
+            if (!results || localSearch.getStatus() !== 0) {
+              callback([]);
+              return;
+            }
+
+            var list = [];
+            var count = results.getCurrentNumPois();
+            var center = self.pickerMapInstance.getCenter();
+
+            for (var i = 0; i < count; i++) {
+              var poi = results.getPoi(i);
+              if (!poi || !poi.point) continue;
+
+              list.push({
+                point: poi.point,
+                title: poi.title || '',
+                address: poi.address || '',
+                province: poi.province || '',
+                city: poi.city || '',
+                district: poi.district || '',
+                street: '',
+                streetNumber: '',
+                distanceText: center ? self.calcDistanceText(center, poi.point) : ''
+              });
+            }
+
+            callback(list);
+          }
+        });
+
+        localSearch.search(keyword);
+      },
+
+      chooseSearchResult: function (item) {
+        this.pickerKeyword = item.title || '';
+        this.chooseNearbyItem(item);
+      },
+
+      highlightKeyword: function (text, keyword) {
+        if (!text) return '';
+        if (!keyword) return this.escapeHtml(text);
+
+        var safeText = this.escapeHtml(text);
+        var safeKeyword = this.escapeReg(keyword);
+        return safeText.replace(new RegExp('(' + safeKeyword + ')', 'ig'), '<span class="match-text">$1</span>');
+      },
+
+      escapeHtml: function (str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      },
+
+      escapeReg: function (str) {
+        return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      },
+
+      openRegionSelector: function () {
+        this.showRegionSelector = true;
+        this.regionSelectorTab = 'domestic';
+
+        this.regionTemp = {
+          province: this.regionForm.province || '',
+          city: this.regionForm.city || '',
+          district: this.regionForm.district || ''
+        };
+
+        if (this.regionTemp.province && this.regionTemp.city) {
+          if (this.regionTemp.district) {
+            this.regionStep = 'district';
+          } else {
+            this.regionStep = 'city';
+          }
+        } else {
+          this.regionStep = 'province';
+        }
+      },
+
+      closeRegionSelector: function () {
+        this.showRegionSelector = false;
+      },
+
+      switchRegionSelectorTab: function (tab) {
+        this.regionSelectorTab = tab;
+      },
+
+      goBackToProvinceStep: function () {
+        this.regionTemp.city = '';
+        this.regionTemp.district = '';
+        this.regionStep = 'province';
+      },
+
+      goBackToCityStep: function () {
+        this.regionTemp.district = '';
+        this.regionStep = 'city';
+      },
+
+      selectHotCity: function (item) {
+        this.regionTemp.province = item.province;
+        this.regionTemp.city = item.city;
+        this.regionTemp.district = item.district || '';
+        this.applyRegionSelection();
+      },
+
+      selectProvince: function (name) {
+        this.regionTemp.province = name;
+        this.regionTemp.city = '';
+        this.regionTemp.district = '';
+        this.regionStep = 'city';
+      },
+
+      selectCity: function (name) {
+        this.regionTemp.city = name;
+        this.regionTemp.district = '';
+
+        var districtList = this.districtData[name] || [];
+        if (districtList.length) {
+          this.regionStep = 'district';
+        } else {
+          this.applyRegionSelection();
+        }
+      },
+
+      selectDistrict: function (name) {
+        this.regionTemp.district = name;
+        this.applyRegionSelection();
+      },
+
+      selectOverseaRegion: function (name) {
+        this.regionForm.province = name;
+        this.regionForm.city = '';
+        this.regionForm.district = '';
+        this.regionDisplayText = name;
+        this.showRegionSelector = false;
+        this.activeTab = 'region';
+      },
+
+      applyRegionSelection: function () {
+        this.regionForm.province = this.regionTemp.province || '';
+        this.regionForm.city = this.regionTemp.city || '';
+        this.regionForm.district = this.regionTemp.district || '';
+        this.regionDisplayText = [
+          this.regionForm.province,
+          this.regionForm.city,
+          this.regionForm.district
+        ].filter(Boolean).join(' ');
+        this.showRegionSelector = false;
+        this.activeTab = 'region';
+      },
+
+      composeRegionFullAddress: function () {
+        var region = [this.regionForm.province, this.regionForm.city, this.regionForm.district].filter(Boolean).join('');
+        return (region || '') + (this.regionForm.detailAddress || '');
+      },
+
+      readClipboardText: async function () {
+        try {
+          if (!navigator.clipboard || !navigator.clipboard.readText) {
+            alert('当前环境不支持直接读取剪贴板，请手动粘贴');
+            return;
+          }
+
+          var text = await navigator.clipboard.readText();
+          if (!text) {
+            alert('剪贴板为空');
+            return;
+          }
+
+          this.pasteText = text;
+        } catch (e) {
+          alert('读取剪贴板失败，请手动粘贴');
+        }
+      },
+
+      parsePastedAddress: function () {
+        var self = this;
+        var text = (this.pasteText || '').trim();
+
+        this.addressRiskList = [];
+        this.addressRiskText = '';
+        this.riskConfirmed = false;
+
+        if (!text) {
+          alert('请先粘贴地址内容');
+          return;
+        }
+
+        var cleaned = this.cleanAddressText(text);
+        var parsed = this.simpleParseAddress(cleaned);
+
+        if (parsed.detail) {
+          if (this.activeTab === 'map') {
+            this.sheetDoorNumber = parsed.detail;
+          } else {
+            this.regionForm.detailAddress = parsed.detail;
+          }
+        }
+
+        this.regionForm.province = parsed.province || this.regionForm.province;
+        this.regionForm.city = parsed.city || this.regionForm.city;
+        this.regionForm.district = parsed.district || this.regionForm.district;
+        this.regionDisplayText = [
+          this.regionForm.province,
+          this.regionForm.city,
+          this.regionForm.district
+        ].filter(Boolean).join(' ');
+
+        if (!this.geocoder) {
+          this.selectedLocation = {
+            point: null,
+            title: parsed.name || parsed.detail || '已识别地址',
+            name: parsed.name || parsed.detail || '已识别地址',
+            address: cleaned,
+            province: parsed.province || '',
+            city: parsed.city || '',
+            district: parsed.district || '',
+            street: parsed.street || '',
+            streetNumber: parsed.streetNumber || ''
+          };
+          this.sheetAddressTitle = this.selectedLocation.title || '';
+          this.sheetAddressText = this.selectedLocation.address || '';
+          this.validateAddressRisk(cleaned, parsed, this.selectedLocation);
+          return;
+        }
+
+        this.searchAddressByText(cleaned, function (result) {
+          if (result) {
+            self.selectedLocation = {
+              point: result.point,
+              title: result.title || parsed.name || '已识别地址',
+              name: result.title || parsed.name || '已识别地址',
+              address: result.address || cleaned,
+              province: result.province || parsed.province || '',
+              city: result.city || parsed.city || '',
+              district: result.district || parsed.district || '',
+              street: parsed.street || '',
+              streetNumber: parsed.streetNumber || ''
+            };
+
+            self.sheetAddressTitle = self.selectedLocation.title || '';
+            self.sheetAddressText = self.selectedLocation.address || '';
+            self.validateAddressRisk(cleaned, parsed, self.selectedLocation);
+
+            self.regionForm.province = self.selectedLocation.province || self.regionForm.province;
+            self.regionForm.city = self.selectedLocation.city || self.regionForm.city;
+            self.regionForm.district = self.selectedLocation.district || self.regionForm.district;
+            self.regionDisplayText = [
+              self.regionForm.province,
+              self.regionForm.city,
+              self.regionForm.district
+            ].filter(Boolean).join(' ');
+
+            if (self.pickerMapInstance && result.point) {
+              self.pickerMapInstance.centerAndZoom(result.point, 18);
+            }
+          } else {
+            self.selectedLocation = {
+              point: null,
+              title: parsed.name || parsed.detail || '已识别地址',
+              name: parsed.name || parsed.detail || '已识别地址',
+              address: cleaned,
+              province: parsed.province || '',
+              city: parsed.city || '',
+              district: parsed.district || '',
+              street: parsed.street || '',
+              streetNumber: parsed.streetNumber || ''
+            };
+
+            self.sheetAddressTitle = self.selectedLocation.title || '';
+            self.sheetAddressText = self.selectedLocation.address || '';
+            self.validateAddressRisk(cleaned, parsed, self.selectedLocation);
+          }
+        });
+      },
+
+      cleanAddressText: function (text) {
+        var t = text || '';
+        t = t.replace(/收货地址[:：]?\s*/g, '');
+        t = t.replace(/详细地址[:：]?\s*/g, '');
+        t = t.replace(/地址[:：]?\s*/g, '');
+        t = t.replace(/收货人[:：]?\s*[^\s，,；;]+/g, '');
+        t = t.replace(/联系人[:：]?\s*[^\s，,；;]+/g, '');
+        t = t.replace(/手机号码?[:：]?\s*1\d{10}/g, '');
+        t = t.replace(/电话[:：]?\s*1\d{10}/g, '');
+        t = t.replace(/\b1\d{10}\b/g, '');
+        t = t.replace(/[\r\n\t]/g, ' ');
+        t = t.replace(/\s+/g, ' ');
+        t = t.replace(/[，,；;]/g, '');
+        t = t.trim();
+        return t;
+      },
+
+      simpleParseAddress: function (text) {
+        var result = {
+          province: '',
+          city: '',
+          district: '',
+          street: '',
+          streetNumber: '',
+          detail: '',
+          name: ''
+        };
+
+        var source = text || '';
+
+        var provinceMatch = source.match(/(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区|内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区|[^省]+省)/);
+        if (provinceMatch) {
+          result.province = provinceMatch[0]
+            .replace('省', '')
+            .replace('市', '')
+            .replace('特别行政区', '')
+            .replace('自治区', '');
+        }
+
+        var cityMatch = source.match(/([^市]+市|[^州]+州|[^地区]+地区|[^盟]+盟)/);
+        if (cityMatch) result.city = cityMatch[0];
+
+        var districtMatch = source.match(/([^区]+区|[^县]+县|[^旗]+旗)/);
+        if (districtMatch) result.district = districtMatch[0];
+
+        var remain = source;
+        if (provinceMatch) remain = remain.replace(provinceMatch[0], '');
+        if (result.city) remain = remain.replace(result.city, '');
+        if (result.district) remain = remain.replace(result.district, '');
+
+        var houseMatch = remain.match(/([A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+)$/);
+        result.detail = houseMatch ? houseMatch[0] : remain.trim();
+
+        var streetMatch = source.match(/([^省市区县]+(?:路|街|道|巷))/);
+        if (streetMatch) result.street = streetMatch[0];
+
+        var streetNumberMatch = source.match(/(\d+号|\d+弄|\d+栋|\d+幢|\d+单元|\d+室|[A-Za-z0-9\-]+室)/);
+        if (streetNumberMatch) result.streetNumber = streetNumberMatch[0];
+
+        result.name = remain.trim().slice(0, 20);
+
+        return result;
+      },
+
+      searchAddressByText: function (keyword, callback) {
+        var self = this;
+
+        if (!keyword) {
+          callback(null);
+          return;
+        }
+
+        var mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
+
+        var localSearch = new BMapGL.LocalSearch(mapContext, {
+          pageCapacity: 1,
+          onSearchComplete: function (results) {
+            if (!results || localSearch.getStatus() !== 0 || results.getCurrentNumPois() === 0) {
+              callback(null);
+              return;
+            }
+
+            var poi = results.getPoi(0);
+            if (!poi || !poi.point) {
+              callback(null);
+              return;
+            }
+
+            if (!self.geocoder) {
+              callback({
+                point: poi.point,
+                title: poi.title || '',
+                address: poi.address || '',
+                province: poi.province || '',
+                city: poi.city || '',
+                district: poi.district || ''
+              });
+              return;
+            }
+
+            self.geocoder.getLocation(poi.point, function (rs) {
+              var ac = rs && rs.addressComponents ? rs.addressComponents : {};
+              callback({
+                point: poi.point,
+                title: poi.title || '',
+                address: (rs && rs.address) || poi.address || keyword,
+                province: (ac.province || poi.province || '').replace('省', '').replace('市', ''),
+                city: ac.city || poi.city || '',
+                district: ac.district || poi.district || ''
+              });
+            });
+          }
+        });
+
+        localSearch.search(keyword);
+      },
+
+      validateAddressRisk: function (rawText, parsedInput, finalLocation) {
+        var risks = [];
+
+        var inputProvince = parsedInput && parsedInput.province ? parsedInput.province : '';
+        var inputCity = parsedInput && parsedInput.city ? parsedInput.city : '';
+        var inputDistrict = parsedInput && parsedInput.district ? parsedInput.district : '';
+
+        var finalProvince = finalLocation && finalLocation.province ? String(finalLocation.province).replace('省', '').replace('市', '') : '';
+        var finalCity = finalLocation && finalLocation.city ? finalLocation.city : '';
+        var finalDistrict = finalLocation && finalLocation.district ? finalLocation.district : '';
+
+        if (!inputProvince || !inputCity || !inputDistrict) {
+          risks.push('输入地址中的省、市、区信息可能不完整');
+        }
+
+        if (inputProvince && finalProvince && inputProvince !== finalProvince) {
+          risks.push('输入的省份与识别结果不一致：输入为“' + inputProvince + '”，识别为“' + finalProvince + '”');
+        }
+
+        if (inputCity && finalCity && inputCity !== finalCity) {
+          risks.push('输入的城市与识别结果不一致：输入为“' + inputCity + '”，识别为“' + finalCity + '”');
+        }
+
+        if (inputDistrict && finalDistrict && inputDistrict !== finalDistrict) {
+          risks.push('输入的区县与识别结果不一致：输入为“' + inputDistrict + '”，识别为“' + finalDistrict + '”');
+        }
+
+        if (parsedInput && parsedInput.detail && parsedInput.detail.length < 2) {
+          risks.push('详细地址过短，可能不完整');
+        }
+
+        this.addressRiskList = risks;
+        this.addressRiskText = risks.join('；');
+      },
+
+      buildMapPayload: function () {
+        this.form.province = this.selectedLocation.province || '';
+        this.form.city = this.selectedLocation.city || '';
+        this.form.district = this.selectedLocation.district || '';
+        this.form.street = this.selectedLocation.street || '';
+        this.form.streetNumber = this.selectedLocation.streetNumber || '';
+        this.form.fullAddress = this.selectedLocation.address || this.sheetAddressText || '';
+        this.form.lng = this.selectedLocation.point ? (this.selectedLocation.point.lng || '') : '';
+        this.form.lat = this.selectedLocation.point ? (this.selectedLocation.point.lat || '') : '';
+
+        if (this.sheetDoorNumber) {
+          this.form.detailAddress = this.sheetDoorNumber;
+        }
+
+        return {
+          province: this.form.province,
+          city: this.form.city,
+          district: this.form.district,
+          street: this.form.street,
+          streetNumber: this.form.streetNumber,
+          detailAddress: this.form.detailAddress || '',
+          fullAddress: this.form.fullAddress,
+          lng: this.form.lng,
+          lat: this.form.lat,
+          title: this.selectedLocation.title || this.sheetAddressTitle || '',
+          hasRisk: this.addressRiskList.length > 0,
+          riskConfirmed: this.riskConfirmed,
+          riskMessages: this.addressRiskList.slice()
+        };
+      },
+
+      buildRegionPayload: function () {
+        this.form.province = this.regionForm.province || '';
+        this.form.city = this.regionForm.city || '';
+        this.form.district = this.regionForm.district || '';
+        this.form.street = '';
+        this.form.streetNumber = '';
+        this.form.lng = '';
+        this.form.lat = '';
+        this.form.detailAddress = this.regionForm.detailAddress || '';
+        this.form.fullAddress = this.composeRegionFullAddress();
+
+        return {
+          province: this.form.province,
+          city: this.form.city,
+          district: this.form.district,
+          street: '',
+          streetNumber: '',
+          detailAddress: this.form.detailAddress || '',
+          fullAddress: this.form.fullAddress,
+          lng: '',
+          lat: '',
+          title: this.regionDisplayText || '',
+          hasRisk: this.addressRiskList.length > 0,
+          riskConfirmed: this.riskConfirmed,
+          riskMessages: this.addressRiskList.slice()
+        };
+      },
+
+      savePayload: function (payload) {
+        localStorage.setItem('customer_address_payload', JSON.stringify(payload));
+
+        if (window.parent) {
+          window.parent.postMessage({
+            type: 'ADDRESS_SELECTED',
+            data: payload
+          }, '*');
+        }
+
+        console.log('地址确认回填数据:', payload);
+        this.showAddressSheet = false;
+      },
+
+      confirmSheetAddress: function () {
+        var payload;
+
+        if (this.activeTab === 'map') {
+          if (!this.selectedLocation.address && !this.sheetAddressText) {
+            alert('请先选择或识别地址');
+            return;
+          }
+          payload = this.buildMapPayload();
+        } else {
+          if (!this.regionDisplayText) {
+            alert('请先选择所在地区');
+            return;
+          }
+          if (!this.regionForm.detailAddress) {
+            alert('请填写详细地址');
+            return;
+          }
+          payload = this.buildRegionPayload();
+        }
+
+        if (this.addressRiskList.length) {
+          this.pendingPayload = payload;
+          this.showRiskConfirm = true;
+          return;
+        }
+
+        this.riskConfirmed = false;
+        this.savePayload(payload);
+      },
+
+      cancelRiskConfirm: function () {
+        this.showRiskConfirm = false;
+        this.pendingPayload = null;
+      },
+
+      continueRiskConfirm: function () {
+        this.riskConfirmed = true;
+        this.showRiskConfirm = false;
+
+        var payload = this.pendingPayload || (this.activeTab === 'map' ? this.buildMapPayload() : this.buildRegionPayload());
+        payload.riskConfirmed = true;
+        payload.hasRisk = this.addressRiskList.length > 0;
+        payload.riskMessages = this.addressRiskList.slice();
+
+        this.savePayload(payload);
+        this.pendingPayload = null;
+      }
+    }
+  });
+
+  function sortByLetterAndName(a, b) {
+    if (a.letter === b.letter) {
+      return a.name.localeCompare(b.name, 'zh-CN');
+    }
+    return a.letter.localeCompare(b.letter);
+  }
+
+  function getLetter(name) {
+    var map = {
+      '安': 'A', '北': 'B', '重': 'C', '福': 'F', '甘': 'G', '广': 'G', '贵': 'G',
+      '海': 'H', '河': 'H', '黑': 'H', '湖': 'H', '吉': 'J', '江': 'J', '辽': 'L',
+      '内': 'N', '宁': 'N', '青': 'Q', '山': 'S', '上': 'S', '四': 'S', '天': 'T',
+      '西': 'X', '新': 'X', '云': 'Y', '浙': 'Z', '合': 'H', '芜': 'W', '蚌': 'B',
+      '淮': 'H', '马': 'M', '铜': 'T', '黄': 'H', '滁': 'C', '阜': 'F', '宿': 'S',
+      '六': 'L', '亳': 'B', '池': 'C', '宣': 'X', '石': 'S', '唐': 'T', '保': 'B',
+      '廊': 'L', '秦': 'Q', '邯': 'H', '邢': 'X', '沧': 'C', '衡': 'H', '张': 'Z',
+      '承': 'C', '南': 'N', '柳': 'L', '桂': 'G', '梧': 'W', '玉': 'Y', '百': 'B',
+      '钦': 'Q', '防': 'F', '深': 'S', '珠': 'Z', '佛': 'F', '东': 'D', '中': 'Z',
+      '惠': 'H', '汕': 'S', '湛': 'Z', '肇': 'Z', '茂': 'M', '揭': 'J', '清': 'Q',
+      '武': 'W', '长': 'C', '株': 'Z', '湘': 'X', '岳': 'Y', '常': 'C', '郴': 'C',
+      '益': 'Y', '邵': 'S', '怀': 'H', '永': 'Y', '哈': 'H', '齐': 'Q', '牡': 'M',
+      '佳': 'J', '大': 'D', '沈': 'S', '鞍': 'A', '抚': 'F', '本': 'B', '丹': 'D',
+      '锦': 'J', '营': 'Y', '呼': 'H', '包': 'B', '赤': 'C', '鄂': 'E', '通': 'T',
+      '银': 'Y', '吴': 'W', '固': 'G', '西': 'X', '济': 'J', '烟': 'Y', '潍': 'W',
+      '淄': 'Z', '临': 'L', '威': 'W', '太': 'T', '运': 'Y', '晋': 'J', '成': 'C',
+      '绵': 'M', '德': 'D', '乐': 'L', '宜': 'Y', '泸': 'L', '自': 'Z', '拉': 'L',
+      '乌': 'W', '克': 'K', '喀': 'K', '伊': 'Y', '昆': 'K', '曲': 'Q', '红': 'H',
+      '丽': 'L', '杭': 'H', '嘉': 'J', '金': 'J', '宁': 'N', '衢': 'Q', '绍': 'S',
+      '台': 'T', '温': 'W', '舟': 'Z'
+    };
+    var first = (name || '').charAt(0);
+    return map[first] || '#';
+  }
+</script>
+</body>
+</html>
