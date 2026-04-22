@@ -359,6 +359,7 @@
       display: flex;
       align-items: center;
       min-height: 22px;
+      position: relative;
     }
 
     .region-detail-input {
@@ -369,6 +370,60 @@
       font-size: 15px;
       color: #333;
       padding: 0;
+    }
+
+    .region-detail-clear {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #c8c9cc;
+      color: #fff;
+      font-size: 16px;
+      line-height: 22px;
+      text-align: center;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .region-suggest-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 14px);
+      z-index: 6;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border: 1px solid #f2f3f5;
+      overflow: hidden;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .region-suggest-item {
+      padding: 16px 18px 14px;
+      cursor: pointer;
+    }
+
+    .region-suggest-item + .region-suggest-item {
+      border-top: 1px solid #f5f5f5;
+    }
+
+    .region-suggest-title {
+      font-size: 17px;
+      line-height: 24px;
+      color: #222;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .region-suggest-address {
+      margin-top: 6px;
+      font-size: 14px;
+      line-height: 20px;
+      color: #666;
+      word-break: break-all;
     }
 
     input::placeholder {
@@ -385,6 +440,18 @@
       background: #fff;
       border-top: 1px solid #f2f2f2;
       padding-top: 12px;
+    }
+
+    .paste-collapse {
+      overflow: hidden;
+      transition: max-height 0.28s ease, opacity 0.22s ease;
+      max-height: 360px;
+      opacity: 1;
+    }
+
+    .paste-collapse.collapsed {
+      max-height: 0;
+      opacity: 0;
     }
 
     .paste-box {
@@ -462,7 +529,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
       user-select: none;
+      cursor: pointer;
+    }
+
+    .clipboard-arrow {
+      width: 12px;
+      height: 12px;
+      background: url('./eglass-arrow-down.png') center/contain no-repeat;
+      transition: transform 0.24s ease;
+      flex-shrink: 0;
+    }
+
+    .clipboard-arrow.expanded {
+      transform: rotate(180deg);
     }
 
     .risk-box {
@@ -1371,7 +1452,26 @@
                         class="region-detail-input"
                         v-model.trim="regionForm.detailAddress"
                         placeholder="小区、门牌号"
+                        @input="onRegionDetailInput"
+                        @focus="onRegionDetailInput"
                       />
+                      <div
+                        class="region-detail-clear"
+                        v-if="regionForm.detailAddress"
+                        @click="clearRegionDetailInput"
+                      >×</div>
+
+                      <div class="region-suggest-panel" v-if="showRegionSuggest">
+                        <div
+                          class="region-suggest-item"
+                          v-for="(item, index) in regionSuggestList"
+                          :key="'region-suggest-' + index"
+                          @click="selectRegionSuggestion(item)"
+                        >
+                          <div class="region-suggest-title">{{ item.title || item.name || item.keyword }}</div>
+                          <div class="region-suggest-address">{{ item.address || '-' }}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1382,6 +1482,7 @@
 
           <div class="paste-wrap">
             <div class="paste-panel">
+              <div class="paste-collapse" :class="{ collapsed: !showPasteBoard }">
               <div class="paste-box">
                 <textarea
                   v-model.trim="pasteText"
@@ -1391,7 +1492,7 @@
                     : '试试粘贴收件人姓名、手机号、收货地址，可快速识别您的收货信息'"
                 ></textarea>
 
-                <div class="paste-actions">
+                <div class="paste-actions" v-show="pasteText">
                   <button class="paste-action-btn clear-btn" @click="clearPasteText" :disabled="isParsingPaste">清除</button>
                   <button
                     class="paste-action-btn submit-btn"
@@ -1401,9 +1502,11 @@
                   >{{ isParsingPaste ? '识别中' : '提交' }}</button>
                 </div>
               </div>
+              </div>
 
-              <div class="clipboard-bar">
-                <span>地址粘贴板 ^</span>
+              <div class="clipboard-bar" @click="togglePasteBoard">
+                <span>地址粘贴板</span>
+                <span class="clipboard-arrow" :class="{ expanded: showPasteBoard }"></span>
               </div>
             </div>
           </div>
@@ -1869,6 +1972,7 @@
         showPasteConfirm: false,
         showVantAlert: false,
         showRegionSelector: false,
+        showPasteBoard: false, // 粘贴板展开状态，默认关闭
         isParsingPaste: false,
 
         sheetProviceCityDistrict: '', // 地图选址页显示的省市区文本
@@ -1940,6 +2044,8 @@
           district: '',
           detailAddress: ''
         },
+        regionSuggestList: [],
+        regionSuggestTimer: null,
 
         regionSelectorTab: 'domestic',
         regionStep: 'province',
@@ -2092,6 +2198,9 @@
         return this.groupedDistrictList.map(function (item) {
           return item.letter;
         });
+      },
+      showRegionSuggest: function () {
+        return this.activeTab === 'region' && this.regionSuggestList.length > 0 && !!this.regionForm.detailAddress;
       }
     },
 
@@ -2172,10 +2281,17 @@
         this.showVantAlert = false;
       },
 
+      togglePasteBoard: function () {
+        this.showPasteBoard = !this.showPasteBoard;
+      },
+
       switchMainTab: function (tab) {
         this.activeTab = tab;
         this.addressRiskList = [];
         this.addressRiskText = '';
+        if (tab !== 'region') {
+          this.clearRegionSuggest();
+        }
       },
 
       clearPasteText: function () {
@@ -2188,6 +2304,98 @@
           regionText: '',
           detailAddress: ''
         };
+      },
+
+      clearRegionSuggest: function () {
+        this.regionSuggestList = [];
+      },
+
+      clearRegionDetailInput: function () {
+        this.regionForm.detailAddress = '';
+        this.clearRegionSuggest();
+      },
+
+      onRegionDetailInput: function () {
+        var self = this;
+        if (this.regionSuggestTimer) {
+          clearTimeout(this.regionSuggestTimer);
+        }
+
+        if (!this.regionDisplayText || !this.regionForm.detailAddress) {
+          this.clearRegionSuggest();
+          return;
+        }
+
+        this.regionSuggestTimer = setTimeout(function () {
+          self.searchRegionSuggestions();
+        }, 240);
+      },
+
+      searchRegionSuggestions: function () {
+        var self = this;
+        this.initBaseServices();
+        var keyword = (this.regionForm.detailAddress || '').trim();
+        if (!keyword) {
+          this.clearRegionSuggest();
+          return;
+        }
+
+        var regionKeyword = this.getRegionParts(
+          this.regionForm.province,
+          this.regionForm.city,
+          this.regionForm.district
+        ).join('');
+
+        if (!regionKeyword) {
+          this.clearRegionSuggest();
+          return;
+        }
+
+        var mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
+        var localSearch = new BMapGL.LocalSearch(mapContext, {
+          pageCapacity: 6,
+          onSearchComplete: function (results) {
+            if (!results || localSearch.getStatus() !== 0) {
+              self.clearRegionSuggest();
+              return;
+            }
+
+            var list = [];
+            var count = results.getCurrentNumPois();
+            for (var i = 0; i < count; i++) {
+              var poi = results.getPoi(i);
+              if (!poi) continue;
+
+              var province = self.formatProvinceName(poi.province || '');
+              var city = poi.city || '';
+              var district = poi.district || '';
+
+              if (self.regionForm.province && province && province !== self.regionForm.province) continue;
+              if (self.regionForm.city && self.regionForm.city !== '市辖区' && city && city !== self.regionForm.city) continue;
+              if (self.regionForm.district && district && district !== self.regionForm.district) continue;
+
+              list.push({
+                title: poi.title || keyword,
+                name: poi.title || keyword,
+                address: poi.address || '',
+                point: poi.point || null,
+                province: province,
+                city: city,
+                district: district
+              });
+            }
+
+            self.regionSuggestList = list;
+          }
+        });
+
+        localSearch.search(regionKeyword + keyword);
+      },
+
+      selectRegionSuggestion: function (item) {
+        if (!item) return;
+        this.regionForm.detailAddress = item.title || item.name || this.regionForm.detailAddress;
+        this.clearRegionSuggest();
       },
 
       initBaseServices: function () {
@@ -2825,6 +3033,7 @@
         this.regionForm.city = '';
         this.regionForm.district = '';
         this.regionDisplayText = this.getRegionParts(this.regionForm.province, '', '').join(' ');
+        this.clearRegionSuggest();
         this.showRegionSelector = false;
         this.activeTab = 'region';
       },
@@ -2838,6 +3047,7 @@
           this.regionForm.city,
           this.regionForm.district
         ).join(' ');
+        this.clearRegionSuggest();
         this.showRegionSelector = false;
         this.activeTab = 'region';
       },
