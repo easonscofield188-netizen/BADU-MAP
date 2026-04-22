@@ -595,10 +595,10 @@
       position: absolute;
       left: 14px;
       top: 50%;
-      width: 12px;
-      height: 12px;
-      border-left: 2px solid #c32026;
-      border-bottom: 2px solid #c32026;
+      width: 14px;
+      height: 14px;
+      border-left: 2.5px solid #202020;
+      border-bottom: 2.5px solid #202020;
       transform-origin: center;   
     }
 
@@ -628,6 +628,7 @@
       color: #333;
       flex-shrink: 0;
       white-space: nowrap;
+      cursor: pointer;
     }
 
     .search-box {
@@ -666,6 +667,8 @@
     }
 
     .map-box-full {
+      position: relative;
+      z-index: 1;
       width: 100%;
       height: 100%;
     }
@@ -677,20 +680,98 @@
       width: 28px;
       height: 38px;
       transform: translate(-50%, -100%);
-      z-index: 2;
+      z-index: 12;
       pointer-events: none;
       background: url("./research-location-icon.png") center center / 48px 48px no-repeat;
     }
 
+    .center-marker-current-dot {
+      position: absolute;
+      width: 84px;
+      height: 84px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: rgba(55, 167, 255, 0.18);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .center-marker-current-dot::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(36, 145, 255, 0.28);
+    }
+
+    .center-marker-current-dot::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: #1492ff;
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.75);
+    }
+
+    .center-marker-bubble {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, calc(-100% - 54px));
+      max-width: 220px;
+      min-height: 30px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      font-size: 13px;
+      line-height: 18px;
+      color: #333;
+      text-align: center;
+      z-index: 11;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .center-marker-bubble::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      transform: translateX(-50%) rotate(45deg);
+      box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.04);
+    }
+
     .map-locate-btn {
       position: absolute;
-      left: 12px;
+      right: 12px;
       bottom: 12px;
       width: 40px;
       height: 40px;
+      border: none;
+      outline: none;
       border-radius: 8px;
+      background: #fff url("./research-list-location-gray-icon.png") center center / 22px 22px no-repeat;
       box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      z-index: 3;     
+      z-index: 20;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: auto;
+      cursor: pointer;
     }
 
     .nearby-list,
@@ -708,6 +789,10 @@
       gap: 10px;
       padding: 14px 12px;
       border-bottom: 1px solid #f3f3f3;    
+    }
+
+    .nearby-item.active-item {
+      background: #fff;
     }
 
     .nearby-left,
@@ -746,6 +831,10 @@
       line-height: 1.45;
     }
 
+    .nearby-item.active-item .nearby-name {
+      color: #ef4444;
+    }
+
     .search-item-name .match-text {
       color: #d73a32;
     }
@@ -774,6 +863,202 @@
       z-index: 1150;
       display: flex;
       flex-direction: column;
+    }
+
+    .city-picker-page {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 1160;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .city-picker-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px 10px;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .city-picker-search {
+      flex: 1;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      background: #f5f6f8;
+      border-radius: 22px;
+      padding: 0 14px;
+    }
+
+    .city-picker-search .search-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      background-size: 20px 20px;
+      opacity: 0.7;
+    }
+
+    .city-picker-input {
+      flex: 1;
+      height: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .city-picker-cancel {
+      flex-shrink: 0;
+      font-size: 15px;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .city-picker-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      background: #fff;
+      position: relative;
+      padding-right: 38px;
+    }
+
+    .city-picker-current-letter {
+      height: 46px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      background: #fff;
+      border-bottom: 1px solid #f4f4f4;
+      font-size: 18px;
+      line-height: 26px;
+      color: #222;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .city-picker-section {
+      padding: 14px 16px 0;
+    }
+
+    .city-picker-section-title {
+      font-size: 15px;
+      color: #8b8b8b;
+      line-height: 22px;
+      margin-bottom: 14px;
+    }
+
+    .city-picker-current {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #f1f1f1;
+      cursor: pointer;
+    }
+
+    .city-picker-current-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      background: url("./research-list-location-icon.png") center center / 24px 24px no-repeat;
+    }
+
+    .city-picker-current-name {
+      font-size: 24px;
+      line-height: 32px;
+      color: #111;
+      font-weight: 600;
+    }
+
+    .city-picker-list {
+      position: relative;
+      padding: 0 0 24px;
+    }
+
+    .city-picker-group {
+      padding: 0 16px;
+    }
+
+    .city-picker-group-letter {
+      font-size: 18px;
+      line-height: 26px;
+      color: #333;
+      font-weight: 600;
+      padding: 18px 0 12px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .city-picker-item {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      font-size: 17px;
+      color: #222;
+      border-bottom: 1px solid #f5f5f5;
+      cursor: pointer;
+    }
+
+    .city-picker-empty {
+      padding: 72px 24px 0;
+      text-align: center;
+      font-size: 15px;
+      color: #999;
+    }
+
+    .city-picker-index {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      padding: 8px 0;
+      border-radius: 15px;
+      background: rgba(244, 244, 244, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 8;
+    }
+
+    .city-picker-index span {
+      font-size: 12px;
+      line-height: 1;
+      color: #8f8f8f;
+      cursor: pointer;
+    }
+
+    .city-picker-index span.active {
+      color: #222;
+      font-weight: 600;
+    }
+
+    .city-picker-letter-toast {
+      position: absolute;
+      right: 56px;
+      top: 50%;
+      width: 44px;
+      height: 44px;
+      margin-top: -22px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      line-height: 1;
+      color: #7a7a7a;
+      font-weight: 500;
+      z-index: 9;
+      pointer-events: none;
     }
 
     .search-page-body {
@@ -1545,7 +1830,7 @@
 
       <div class="search-wrap">
         <div class="search-row">
-          <div class="city-name">{{ pickerCityText || '当前城市' }} ▾</div>
+          <div class="city-name" @click="openCityPickerPage">{{ pickerCityText || '当前城市' }} ▾</div>
           <div class="search-box" @click="openSearchPage">
             <div class="search-icon"></div>
             <input
@@ -1560,13 +1845,22 @@
 
       <div class="map-area">
         <div ref="pickerMap" class="map-box-full"></div>
+        <div class="center-marker-bubble" v-if="nearbyList.length && (nearbyList[0].title || nearbyList[0].address)">
+          {{ nearbyList[0].title || nearbyList[0].address }}
+        </div>
+        <div class="center-marker-current-dot" :style="currentLocationMarkerStyle"></div>
         <div class="center-marker"></div>
-        <div class="map-locate-btn" @click="fetchCurrentLocationForPicker"></div>
+        <button
+          type="button"
+          ref="mapLocateBtn"
+          class="map-locate-btn"
+        ></button>
       </div>
 
       <div class="nearby-list">
         <div
           class="nearby-item"
+          :class="{ 'active-item': index === 0 }"
           v-for="(item, index) in nearbyList"
           :key="'nearby-' + index"
           @click="chooseNearbyItem(item)"
@@ -1632,6 +1926,70 @@
           如果找不到地址，请尝试只输入小区、写字楼或学校名称，<br />
           门牌号可稍后输入哦。
         </div>
+      </div>
+    </div>
+  </transition>
+
+  <transition name="slide-left-page">
+    <div class="city-picker-page" v-show="showCityPickerPage">
+      <div class="city-picker-top">
+        <div class="city-picker-search">
+          <div class="search-icon"></div>
+          <input
+            ref="cityPickerInput"
+            class="city-picker-input"
+            v-model.trim="cityPickerKeyword"
+            placeholder="输入城市名称进行搜索"
+            @input="onCityPickerInput"
+          />
+        </div>
+        <div class="city-picker-cancel" @click="closeCityPickerPage">取消</div>
+      </div>
+
+      <div class="city-picker-current-letter" v-if="cityPickerGroupedList.length">
+        {{ cityPickerIndexActive || cityPickerLetterList[0] || '' }}
+      </div>
+
+      <div class="city-picker-body" ref="cityPickerListWrap" @scroll="handleCityPickerListScroll">
+        <div class="city-picker-section">
+          <div class="city-picker-section-title">当前定位城市</div>
+          <div class="city-picker-current" @click="selectCityPickerItem(currentCityDisplayName)">
+            <div class="city-picker-current-icon"></div>
+            <div class="city-picker-current-name">{{ currentCityDisplayName || '未定位' }}</div>
+          </div>
+        </div>
+
+        <div class="city-picker-list" v-if="cityPickerGroupedList.length">
+          <div
+            class="city-picker-group"
+            v-for="group in cityPickerGroupedList"
+            :key="'city-picker-group-' + group.letter"
+            :data-letter="group.letter"
+          >
+            <div class="city-picker-group-letter">{{ group.letter }}</div>
+            <div
+              class="city-picker-item"
+              v-for="(item, index) in group.list"
+              :key="'city-picker-item-' + group.letter + '-' + index + '-' + item.name"
+              @click="selectCityPickerItem(item.name)"
+            >{{ item.name }}</div>
+          </div>
+        </div>
+
+        <div class="city-picker-empty" v-else>未找到相关城市/地区</div>
+      </div>
+
+      <div class="city-picker-index" v-if="cityPickerLetterList.length">
+        <span
+          v-for="letter in cityPickerLetterList"
+          :key="'city-picker-letter-' + letter"
+          :class="{ active: cityPickerIndexActive === letter }"
+          @click="scrollToCityPickerLetter(letter)"
+        >{{ letter }}</span>
+      </div>
+
+      <div class="city-picker-letter-toast" v-if="cityPickerToastLetter">
+        {{ cityPickerToastLetter }}
       </div>
     </div>
   </transition>
@@ -2003,6 +2361,7 @@
         showAddressSheet: false,
         showLocationPicker: false,
         showSearchPage: false,
+        showCityPickerPage: false,
         showRiskConfirm: false,
         showPasteConfirm: false,
         showVantAlert: false,
@@ -2031,6 +2390,11 @@
           street: '',
           streetNumber: ''
         },
+        currentLocationMarkerStyle: {
+          display: 'none',
+          left: '50%',
+          top: '50%'
+        },
 
         selectedLocation: {
           point: null,
@@ -2052,6 +2416,10 @@
 
         pickerKeyword: '',
         pickerCityText: '',
+        cityPickerKeyword: '',
+        cityPickerIndexActive: '',
+        cityPickerToastLetter: '',
+        cityPickerToastTimer: null,
         nearbyList: [],
 
         searchPageKeyword: '',
@@ -2256,6 +2624,45 @@
         }
         return list;
       },
+      currentCityDisplayName: function () {
+        return this.normalizeCityPickerName(this.currentLocation.city || this.pickerCityText || '');
+      },
+      cityPickerSourceList: function () {
+        var result = [];
+        var walk = function (list) {
+          (list || []).forEach(function (item) {
+            if (!item || !item.text) return;
+            if (item.text !== '市辖区') {
+              result.push({
+                name: item.text,
+                letter: getLetter(item.text)
+              });
+            }
+            if (item.children && item.children.length) {
+              walk(item.children);
+            }
+          });
+        };
+
+        walk(this.regionDataSource || []);
+        return result.sort(sortByLetterAndName);
+      },
+      cityPickerFilteredList: function () {
+        var keyword = (this.cityPickerKeyword || '').trim();
+        if (!keyword) return this.cityPickerSourceList;
+
+        return this.cityPickerSourceList.filter(function (item) {
+          return item.name && item.name.indexOf(keyword) > -1;
+        });
+      },
+      cityPickerGroupedList: function () {
+        return this.groupByLetter(this.cityPickerFilteredList);
+      },
+      cityPickerLetterList: function () {
+        return this.cityPickerGroupedList.map(function (item) {
+          return item.letter;
+        });
+      },
       showRegionSuggest: function () {
         return this.activeTab === 'region' && this.regionSuggestList.length > 0 && !!this.regionForm.detailAddress;
       }
@@ -2336,6 +2743,17 @@
 
       closeVantAlert: function () {
         this.showVantAlert = false;
+      },
+
+      normalizeCityPickerName: function (name) {
+        var value = (name || '').trim();
+        if (!value) return '';
+        return value
+          .replace(/特别行政区$/, '')
+          .replace(/自治州$/, '')
+          .replace(/地区$/, '')
+          .replace(/盟$/, '')
+          .replace(/市$/, '');
       },
 
       togglePasteBoard: function () {
@@ -2478,6 +2896,178 @@
         this.showAddressSheet = false;
       },
 
+      handleMapLocateButtonEvent: function (e, shouldRecenter) {
+        if (e) {
+          if (typeof e.preventDefault === 'function') e.preventDefault();
+          if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        }
+        if (shouldRecenter) {
+          this.recenterToCurrentLocation();
+        }
+        return false;
+      },
+
+      bindMapLocateButton: function () {
+        var self = this;
+        this.$nextTick(function () {
+          var btn = self.$refs.mapLocateBtn;
+          if (!btn) return;
+
+          btn.onclick = function (e) {
+            return self.handleMapLocateButtonEvent(e, true);
+          };
+          btn.onmouseup = function (e) {
+            return self.handleMapLocateButtonEvent(e, false);
+          };
+          btn.onmousedown = function (e) {
+            return self.handleMapLocateButtonEvent(e, false);
+          };
+          btn.onpointerdown = function (e) {
+            return self.handleMapLocateButtonEvent(e, false);
+          };
+          btn.onpointerup = function (e) {
+            return self.handleMapLocateButtonEvent(e, true);
+          };
+          btn.ontouchstart = function (e) {
+            return self.handleMapLocateButtonEvent(e, false);
+          };
+          btn.ontouchend = function (e) {
+            return self.handleMapLocateButtonEvent(e, true);
+          };
+        });
+      },
+
+      openCityPickerPage: function () {
+        this.showCityPickerPage = true;
+        this.cityPickerKeyword = '';
+        this.cityPickerIndexActive = this.cityPickerLetterList[0] || '';
+        var self = this;
+        this.$nextTick(function () {
+          if (self.$refs.cityPickerInput) {
+            self.$refs.cityPickerInput.focus();
+          }
+          self.handleCityPickerListScroll();
+        });
+      },
+
+      closeCityPickerPage: function () {
+        this.showCityPickerPage = false;
+      },
+
+      onCityPickerInput: function () {
+        var self = this;
+        this.$nextTick(function () {
+          var wrap = self.$refs.cityPickerListWrap;
+          if (wrap) {
+            wrap.scrollTop = 0;
+          }
+          self.cityPickerIndexActive = self.cityPickerLetterList[0] || '';
+        });
+      },
+
+      showCityPickerLetterToast: function (letter) {
+        if (!letter) return;
+
+        this.cityPickerToastLetter = letter;
+        if (this.cityPickerToastTimer) {
+          clearTimeout(this.cityPickerToastTimer);
+        }
+
+        var self = this;
+        this.cityPickerToastTimer = setTimeout(function () {
+          self.cityPickerToastLetter = '';
+          self.cityPickerToastTimer = null;
+        }, 1500);
+      },
+
+      scrollToCityPickerLetter: function (letter) {
+        var wrap = this.$refs.cityPickerListWrap;
+        if (!wrap || !letter) return;
+
+        this.showCityPickerLetterToast(letter);
+        var target = wrap.querySelector('[data-letter="' + letter + '"]');
+        if (!target) return;
+
+        this.cityPickerIndexActive = letter;
+        wrap.scrollTop = target.offsetTop;
+      },
+
+      handleCityPickerListScroll: function () {
+        var wrap = this.$refs.cityPickerListWrap;
+        if (!wrap) return;
+
+        var groups = wrap.querySelectorAll('.city-picker-group[data-letter]');
+        if (!groups || !groups.length) return;
+
+        var activeLetter = '';
+        for (var i = 0; i < groups.length; i++) {
+          if (groups[i].offsetTop - wrap.scrollTop <= 12) {
+            activeLetter = groups[i].getAttribute('data-letter') || '';
+          } else {
+            break;
+          }
+        }
+
+        if (!activeLetter) {
+          activeLetter = groups[0].getAttribute('data-letter') || '';
+        }
+
+        this.cityPickerIndexActive = activeLetter;
+      },
+
+      selectCityPickerItem: function (name) {
+        var value = (name || '').trim();
+        if (!value) return;
+
+        this.pickerCityText = value;
+        this.showCityPickerPage = false;
+        this.searchPageKeyword = '';
+        this.searchResultList = [];
+        this.pickerKeyword = '';
+        this.centerPickerMapToCity(value);
+      },
+
+      centerPickerMapToCity: function (name) {
+        var self = this;
+        if (!name) return;
+
+        this.initBaseServices();
+        if (!this.pickerMapInstance) return;
+
+        if (this.geocoder && typeof this.geocoder.getPoint === 'function') {
+          this.geocoder.getPoint(name, function (point) {
+            if (!point) return;
+            self.pickerMapInstance.centerAndZoom(point, 12);
+            self.loadNearbyByCenter();
+          }, name);
+        }
+      },
+
+      updateCurrentLocationMarker: function () {
+        if (!this.pickerMapInstance || !this.currentLocation || !this.currentLocation.point) {
+          this.currentLocationMarkerStyle.display = 'none';
+          return;
+        }
+
+        try {
+          var pixel = this.pickerMapInstance.pointToPixel(this.currentLocation.point);
+          var size = this.pickerMapInstance.getSize ? this.pickerMapInstance.getSize() : null;
+
+          if (!pixel || !size || pixel.x < -40 || pixel.y < -40 || pixel.x > size.width + 40 || pixel.y > size.height + 40) {
+            this.currentLocationMarkerStyle.display = 'none';
+            return;
+          }
+
+          this.currentLocationMarkerStyle = {
+            display: 'block',
+            left: pixel.x + 'px',
+            top: pixel.y + 'px'
+          };
+        } catch (e) {
+          this.currentLocationMarkerStyle.display = 'none';
+        }
+      },
+
       fetchCurrentLocation: function () {
         var self = this;
         if (!this.geolocation) return;
@@ -2486,6 +3076,7 @@
           if (this.getStatus && this.getStatus() === 0 && r && r.point) {
             self.reversePointToAddress(r.point, function (data) {
               self.currentLocation = data;
+              self.updateCurrentLocationMarker();
 
               if (!self.selectedLocation.point && !self.selectedLocation.address) {
                 self.selectedLocation = JSON.parse(JSON.stringify(data));
@@ -2572,6 +3163,7 @@
         this.showLocationPicker = true;
 
         this.$nextTick(function () {
+          self.bindMapLocateButton();
           self.initPickerMap();
         });
       },
@@ -2597,19 +3189,28 @@
 
           this.pickerMapInstance.addEventListener('moveend', function () {
             self.loadNearbyByCenter();
+            self.updateCurrentLocationMarker();
+          });
+
+          this.pickerMapInstance.addEventListener('moving', function () {
+            self.updateCurrentLocationMarker();
           });
 
           this.pickerMapInstance.addEventListener('zoomend', function () {
             self.loadNearbyByCenter();
+            self.updateCurrentLocationMarker();
           });
         } else if (typeof this.pickerMapInstance.checkResize === 'function') {
           this.pickerMapInstance.checkResize();
         }
 
-        var targetPoint = this.selectedLocation.point || this.currentLocation.point;
+        var targetPoint = this.currentLocation.point || this.selectedLocation.point;
         if (targetPoint) {
           this.pickerMapInstance.centerAndZoom(targetPoint, 18);
           this.loadNearbyByCenter();
+          this.$nextTick(function () {
+            self.updateCurrentLocationMarker();
+          });
         } else {
           this.fetchCurrentLocationForPicker();
         }
@@ -2623,10 +3224,47 @@
           if (this.getStatus && this.getStatus() === 0 && r && r.point) {
             self.pickerMapInstance.centerAndZoom(r.point, 18);
             self.loadNearbyByCenter();
+            if (self.currentLocation && self.currentLocation.point) {
+              self.updateCurrentLocationMarker();
+            } else {
+              self.reversePointToAddress(r.point, function (data) {
+                self.currentLocation = data;
+                self.updateCurrentLocationMarker();
+              });
+            }
           }
         }, {
           enableHighAccuracy: true
         });
+      },
+
+      recenterToCurrentLocation: function () {
+        if (!this.pickerMapInstance) return;
+
+        if (this.currentLocation && this.currentLocation.point) {
+          try {
+            if (typeof this.pickerMapInstance.panTo === 'function') {
+              this.pickerMapInstance.panTo(this.currentLocation.point);
+            } else {
+              this.pickerMapInstance.centerAndZoom(this.currentLocation.point, 18);
+            }
+
+            if (typeof this.pickerMapInstance.setZoom === 'function') {
+              this.pickerMapInstance.setZoom(18);
+            }
+          } catch (e) {
+            this.pickerMapInstance.centerAndZoom(this.currentLocation.point, 18);
+          }
+
+          var self = this;
+          setTimeout(function () {
+            self.loadNearbyByCenter();
+            self.updateCurrentLocationMarker();
+          }, 260);
+          return;
+        }
+
+        this.fetchCurrentLocationForPicker();
       },
 
       loadNearbyByCenter: function () {
@@ -2800,8 +3438,21 @@
       },
 
       chooseSearchResult: function (item) {
+        var self = this;
         this.pickerKeyword = item.title || '';
-        this.chooseNearbyItem(item);
+
+        if (!item || !item.point) {
+          this.chooseNearbyItem(item);
+          return;
+        }
+
+        this.reversePointToAddress(item.point, function (data) {
+          var merged = Object.assign({}, item, data || {});
+          merged.title = item.title || merged.title || '';
+          merged.name = item.title || merged.name || '';
+          merged.address = item.address || merged.address || '';
+          self.chooseNearbyItem(merged);
+        });
       },
 
       highlightKeyword: function (text, keyword) {
