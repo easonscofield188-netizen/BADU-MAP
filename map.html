@@ -436,11 +436,18 @@
     }
 
     .paste-action-btn.submit-btn {
-      width: 54px;
+      min-width: 64px;
+      padding: 0 10px;
       height: 28px;
       border-radius: 6px;
       background: linear-gradient(180deg, #ff6666 0%, #ff3434 100%);
       color: #fff;
+    }
+
+    .paste-action-btn.submit-btn.loading,
+    .paste-action-btn.submit-btn:disabled {
+      opacity: 0.72;
+      cursor: not-allowed;
     }
 
     .clipboard-bar {
@@ -805,6 +812,63 @@
     .confirm-btn.ok {
       color: #ff4d4f;
       font-weight: 600;
+    }
+
+    .paste-confirm-dialog {
+      max-width: 300px;
+      border-radius: 10px;
+    }
+
+    .paste-confirm-header {
+      padding: 18px 18px 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .paste-confirm-body {
+      padding: 0 18px 18px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #333;
+    }
+
+    .paste-confirm-line + .paste-confirm-line {
+      margin-top: 6px;
+    }
+
+    .paste-confirm-label {
+      color: #666;
+    }
+
+    .paste-confirm-value {
+      color: #333;
+      word-break: break-all;
+    }
+
+    .paste-confirm-footer {
+      padding: 0 18px 18px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .paste-confirm-footer .confirm-btn {
+      height: 40px;
+      border-radius: 4px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .paste-confirm-footer .confirm-btn.cancel {
+      background: #f3f4f8;
+      color: #333;
+    }
+
+    .paste-confirm-footer .confirm-btn.ok {
+      background: linear-gradient(180deg, #ff6666 0%, #ff3434 100%);
+      color: #fff;
     }
 
     .region-selector-mask {
@@ -1259,8 +1323,13 @@
                 ></textarea>
 
                 <div class="paste-actions">
-                  <button class="paste-action-btn clear-btn" @click="clearPasteText">清除</button>
-                  <button class="paste-action-btn submit-btn" @click="parsePastedAddress">提交</button>
+                  <button class="paste-action-btn clear-btn" @click="clearPasteText" :disabled="isParsingPaste">清除</button>
+                  <button
+                    class="paste-action-btn submit-btn"
+                    :class="{ loading: isParsingPaste }"
+                    :disabled="isParsingPaste"
+                    @click="parsePastedAddress"
+                  >{{ isParsingPaste ? '识别中' : '提交' }}</button>
                 </div>
               </div>
 
@@ -1552,6 +1621,28 @@
       </div>
     </div>
   </transition>
+
+  <transition name="fade-mask">
+    <div class="confirm-mask" v-show="showPasteConfirm">
+      <div class="confirm-dialog paste-confirm-dialog">
+        <div class="paste-confirm-header">是否填入粘贴板的地址信息？</div>
+        <div class="paste-confirm-body">
+          <div class="paste-confirm-line">
+            <span class="paste-confirm-label">所在地区：</span>
+            <span class="paste-confirm-value">{{ pasteConfirmData.regionText || '-' }}</span>
+          </div>
+          <div class="paste-confirm-line">
+            <span class="paste-confirm-label">详细地址：</span>
+            <span class="paste-confirm-value">{{ pasteConfirmData.detailAddress || '-' }}</span>
+          </div>
+        </div>
+        <div class="paste-confirm-footer">
+          <button class="confirm-btn cancel" @click="cancelPasteConfirm">取消</button>
+          <button class="confirm-btn ok" @click="confirmPasteSelection">确定</button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
@@ -1567,7 +1658,9 @@
         showLocationPicker: false,
         showSearchPage: false,
         showRiskConfirm: false,
+        showPasteConfirm: false,
         showRegionSelector: false,
+        isParsingPaste: false,
 
         sheetProviceCityDistrict: '', // 地图选址页显示的省市区文本
 
@@ -1621,6 +1714,11 @@
         riskConfirmed: false,
 
         pendingPayload: null,
+        pendingPasteSelection: null,
+        pasteConfirmData: {
+          regionText: '',
+          detailAddress: ''
+        },
 
         regionDisplayText: '',
         regionForm: {
@@ -1856,6 +1954,12 @@
         this.pasteText = '';
         this.addressRiskList = [];
         this.addressRiskText = '';
+        this.showPasteConfirm = false;
+        this.pendingPasteSelection = null;
+        this.pasteConfirmData = {
+          regionText: '',
+          detailAddress: ''
+        };
       },
 
       initBaseServices: function () {
@@ -1935,15 +2039,36 @@
           return;
         }
 
-        this.selectedLocation = JSON.parse(JSON.stringify(this.currentLocation));
-        const { province, city, district, address, name, title } = this.selectedLocation;
-        this.sheetAddressTitle = title || name || ''; // 具体位置
-        this.sheetAddressText = address || ''; // 详细地址
-        this.sheetProviceCityDistrict = province + ' ' + city + ' ' + district; // 省市区文本
+        this.applyMapLocationToSheet(JSON.parse(JSON.stringify(this.currentLocation)));
         this.addressRiskList = [];
         this.addressRiskText = '';
         this.riskConfirmed = false;
         this.activeTab = 'map';
+      },
+
+      applyMapLocationToSheet: function (location) {
+        var province = location && location.province ? location.province : '';
+        var city = location && location.city ? location.city : '';
+        var district = location && location.district ? location.district : '';
+        var address = location && location.address ? location.address : '';
+        var name = location && location.name ? location.name : '';
+        var title = location && location.title ? location.title : '';
+
+        this.selectedLocation = Object.assign({
+          point: null,
+          title: '',
+          name: '',
+          address: '',
+          province: '',
+          city: '',
+          district: '',
+          street: '',
+          streetNumber: ''
+        }, location || {});
+
+        this.sheetAddressTitle = title || name || '';
+        this.sheetAddressText = address;
+        this.sheetProviceCityDistrict = [province, city, district].filter(Boolean).join(' ');
       },
 
       openLocationPicker: function () {
@@ -2079,7 +2204,7 @@
       chooseNearbyItem: function (item) {
         if (!item || !item.point) return;
 
-        this.selectedLocation = {
+        this.applyMapLocationToSheet({
           point: item.point,
           title: item.title || '',
           name: item.title || '',
@@ -2089,10 +2214,7 @@
           district: item.district || '',
           street: item.street || '',
           streetNumber: item.streetNumber || ''
-        };
-
-        this.sheetAddressTitle = this.selectedLocation.title || '';
-        this.sheetAddressText = this.selectedLocation.address || '';
+        });
         this.addressRiskList = [];
         this.addressRiskText = '';
         this.riskConfirmed = false;
@@ -2328,12 +2450,17 @@
       parsePastedAddress: function () {
         var self = this;
         var text = (this.pasteText || '').trim();
+        this.initBaseServices();
+        this.isParsingPaste = true;
 
         this.addressRiskList = [];
         this.addressRiskText = '';
         this.riskConfirmed = false;
+        this.showPasteConfirm = false;
+        this.pendingPasteSelection = null;
 
         if (!text) {
+          this.isParsingPaste = false;
           alert('请先粘贴地址内容');
           return;
         }
@@ -2341,25 +2468,8 @@
         var cleaned = this.cleanAddressText(text);
         var parsed = this.simpleParseAddress(cleaned);
 
-        if (parsed.detail) {
-          if (this.activeTab === 'map') {
-            this.sheetDoorNumber = parsed.detail;
-          } else {
-            this.regionForm.detailAddress = parsed.detail;
-          }
-        }
-
-        this.regionForm.province = parsed.province || this.regionForm.province;
-        this.regionForm.city = parsed.city || this.regionForm.city;
-        this.regionForm.district = parsed.district || this.regionForm.district;
-        this.regionDisplayText = [
-          this.regionForm.province,
-          this.regionForm.city,
-          this.regionForm.district
-        ].filter(Boolean).join(' ');
-
         if (!this.geocoder) {
-          this.selectedLocation = {
+          var fallbackLocation = {
             point: null,
             title: parsed.name || parsed.detail || '已识别地址',
             name: parsed.name || parsed.detail || '已识别地址',
@@ -2370,44 +2480,33 @@
             street: parsed.street || '',
             streetNumber: parsed.streetNumber || ''
           };
-          this.sheetAddressTitle = this.selectedLocation.title || '';
-          this.sheetAddressText = this.selectedLocation.address || '';
-          this.validateAddressRisk(cleaned, parsed, this.selectedLocation);
+          var fallbackCandidate = this.buildPasteSelectionCandidate(cleaned, parsed, fallbackLocation);
+          this.validateAddressRisk(cleaned, parsed, fallbackLocation);
+          this.isParsingPaste = false;
+          this.openPasteConfirm(fallbackCandidate);
           return;
         }
 
         this.searchAddressByText(cleaned, function (result) {
+          var finalLocation;
           if (result) {
-            self.selectedLocation = {
+            finalLocation = {
               point: result.point,
-              title: result.title || parsed.name || '已识别地址',
-              name: result.title || parsed.name || '已识别地址',
+              title: self.buildSearchDisplayTitle(parsed, result),
+              name: self.buildSearchDisplayTitle(parsed, result),
               address: result.address || cleaned,
               province: result.province || parsed.province || '',
               city: result.city || parsed.city || '',
               district: result.district || parsed.district || '',
-              street: parsed.street || '',
-              streetNumber: parsed.streetNumber || ''
+              street: result.street || parsed.street || '',
+              streetNumber: result.streetNumber || parsed.streetNumber || ''
             };
-
-            self.sheetAddressTitle = self.selectedLocation.title || '';
-            self.sheetAddressText = self.selectedLocation.address || '';
-            self.validateAddressRisk(cleaned, parsed, self.selectedLocation);
-
-            self.regionForm.province = self.selectedLocation.province || self.regionForm.province;
-            self.regionForm.city = self.selectedLocation.city || self.regionForm.city;
-            self.regionForm.district = self.selectedLocation.district || self.regionForm.district;
-            self.regionDisplayText = [
-              self.regionForm.province,
-              self.regionForm.city,
-              self.regionForm.district
-            ].filter(Boolean).join(' ');
 
             if (self.pickerMapInstance && result.point) {
               self.pickerMapInstance.centerAndZoom(result.point, 18);
             }
           } else {
-            self.selectedLocation = {
+            finalLocation = {
               point: null,
               title: parsed.name || parsed.detail || '已识别地址',
               name: parsed.name || parsed.detail || '已识别地址',
@@ -2418,12 +2517,140 @@
               street: parsed.street || '',
               streetNumber: parsed.streetNumber || ''
             };
+          }
 
-            self.sheetAddressTitle = self.selectedLocation.title || '';
-            self.sheetAddressText = self.selectedLocation.address || '';
-            self.validateAddressRisk(cleaned, parsed, self.selectedLocation);
+          var candidate = self.buildPasteSelectionCandidate(cleaned, parsed, finalLocation);
+          self.validateAddressRisk(cleaned, parsed, finalLocation);
+          self.isParsingPaste = false;
+          self.openPasteConfirm(candidate);
+        });
+      },
+
+      buildSearchDisplayTitle: function (parsed, result) {
+        var parsedName = parsed && parsed.name ? parsed.name : '';
+        var resultTitle = result && result.title ? result.title : '';
+        var parsedDetail = parsed && parsed.detail ? parsed.detail : '';
+
+        if (parsedName && parsedName.length >= resultTitle.length) {
+          return parsedName;
+        }
+
+        if (resultTitle && parsedDetail && resultTitle.indexOf(parsedDetail) === -1 && /^[A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+$/.test(parsedDetail)) {
+          return resultTitle + parsedDetail;
+        }
+
+        return resultTitle || parsedName || parsedDetail || '已识别地址';
+      },
+
+      buildPasteSelectionCandidate: function (cleaned, parsed, finalLocation) {
+        var province = finalLocation && finalLocation.province ? finalLocation.province : parsed.province || '';
+        var city = finalLocation && finalLocation.city ? finalLocation.city : parsed.city || '';
+        var district = finalLocation && finalLocation.district ? finalLocation.district : parsed.district || '';
+        var regionText = [province, city, district].filter(Boolean).join(' ');
+        var detailAddress = this.getPasteConfirmDetailAddress(cleaned, parsed, finalLocation);
+
+        return {
+          activeTab: this.activeTab,
+          rawText: cleaned,
+          parsed: parsed,
+          finalLocation: finalLocation,
+          regionText: regionText,
+          detailAddress: detailAddress,
+          doorNumber: this.extractDoorNumber(parsed)
+        };
+      },
+
+      getPasteConfirmDetailAddress: function (cleaned, parsed, finalLocation) {
+        var title = finalLocation && (finalLocation.title || finalLocation.name) ? (finalLocation.title || finalLocation.name) : '';
+        var fallback = this.extractDetailAddress(cleaned, parsed, finalLocation);
+
+        if (title) {
+          return title;
+        }
+
+        return fallback;
+      },
+
+      extractDetailAddress: function (cleaned, parsed, finalLocation) {
+        var detailAddress = parsed && parsed.detail ? parsed.detail : '';
+        var address = finalLocation && finalLocation.address ? finalLocation.address : cleaned;
+        var province = finalLocation && finalLocation.province ? finalLocation.province : '';
+        var city = finalLocation && finalLocation.city ? finalLocation.city : '';
+        var district = finalLocation && finalLocation.district ? finalLocation.district : '';
+
+        if (!detailAddress) {
+          detailAddress = address || '';
+        }
+
+        [province, city, district].forEach(function (item) {
+          if (item) {
+            detailAddress = detailAddress.replace(item, '');
           }
         });
+
+        detailAddress = detailAddress.replace(/^\s+|\s+$/g, '');
+
+        if (!detailAddress) {
+          detailAddress = address || cleaned || '';
+        }
+
+        return detailAddress;
+      },
+
+      extractDoorNumber: function (parsed) {
+        if (!parsed) return '';
+        return parsed.streetNumber || '';
+      },
+
+      openPasteConfirm: function (candidate) {
+        this.pendingPasteSelection = candidate;
+        this.pasteConfirmData = {
+          regionText: candidate && candidate.regionText ? candidate.regionText : '',
+          detailAddress: candidate && candidate.detailAddress ? candidate.detailAddress : ''
+        };
+        this.showPasteConfirm = true;
+      },
+
+      cancelPasteConfirm: function () {
+        this.showPasteConfirm = false;
+        this.pendingPasteSelection = null;
+        this.pasteConfirmData = {
+          regionText: '',
+          detailAddress: ''
+        };
+      },
+
+      confirmPasteSelection: function () {
+        var candidate = this.pendingPasteSelection;
+
+        if (!candidate) {
+          this.showPasteConfirm = false;
+          return;
+        }
+
+        if (candidate.activeTab === 'map') {
+          this.applyMapLocationToSheet(candidate.finalLocation || {});
+          this.sheetDoorNumber = candidate.doorNumber || '';
+          this.activeTab = 'map';
+        } else {
+          this.regionForm.province = candidate.finalLocation && candidate.finalLocation.province ? candidate.finalLocation.province : '';
+          this.regionForm.city = candidate.finalLocation && candidate.finalLocation.city ? candidate.finalLocation.city : '';
+          this.regionForm.district = candidate.finalLocation && candidate.finalLocation.district ? candidate.finalLocation.district : '';
+          this.regionForm.detailAddress = candidate.detailAddress || '';
+          this.regionDisplayText = candidate.regionText || [
+            this.regionForm.province,
+            this.regionForm.city,
+            this.regionForm.district
+          ].filter(Boolean).join(' ');
+          this.activeTab = 'region';
+        }
+
+        this.showPasteConfirm = false;
+        this.pendingPasteSelection = null;
+        this.pasteConfirmData = {
+          regionText: '',
+          detailAddress: ''
+        };
       },
 
       cleanAddressText: function (text) {
@@ -2534,7 +2761,9 @@
                 address: (rs && rs.address) || poi.address || keyword,
                 province: (ac.province || poi.province || '').replace('省', '').replace('市', ''),
                 city: ac.city || poi.city || '',
-                district: ac.district || poi.district || ''
+                district: ac.district || poi.district || '',
+                street: ac.street || '',
+                streetNumber: ac.streetNumber || ''
               });
             });
           }
