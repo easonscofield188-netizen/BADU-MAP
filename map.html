@@ -871,6 +871,53 @@
       color: #fff;
     }
 
+    .vant-alert-dialog {
+      max-width: 320px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .vant-alert-header {
+      padding: 20px 20px 8px;
+      font-size: 20px;
+      line-height: 28px;
+      color: #323233;
+      font-weight: 500;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    .vant-alert-body {
+      padding: 15px;
+      font-size: 14px;
+      line-height: 22px;
+      color: #646566;
+      word-break: break-all;
+      min-height: 44px;
+      border-top: 1px solid #f0f0f0;
+      border-bottom: 1px solid #f0f0f0;
+      text-align: center;
+    }
+
+    .vant-alert-footer {
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .vant-alert-btn {
+      min-width: 88px;
+      height: 40px;
+      padding: 0 20px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #ff6767 0%, #ff3b30 100%);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+    }
+
     .region-selector-mask {
       position: fixed;
       inset: 0;
@@ -1014,23 +1061,33 @@
     .region-list-wrap {
       flex: 1;
       overflow-y: auto;
-      padding: 4px 28px 16px 0;
+      padding: 4px 40px 16px 0;
       position: relative;
+      scroll-behavior: smooth;
     }
 
     .region-group {
-      padding-left: 12px;
+      display: flex;
+      align-items: flex-start;
+      padding: 4px 0 0 12px;
     }
 
     .region-group-letter {
-      font-size: 22px;
+      width: 16px;
+      flex-shrink: 0;
+      font-size: 16px;
       color: #888;
-      line-height: 32px;
-      padding-top: 6px;
+      line-height: 34px;
+      padding-top: 8px;
+    }
+
+    .region-group-items {
+      flex: 1;
+      min-width: 0;
     }
 
     .region-list-item {
-      padding: 12px 0;
+      padding: 12px 0 12px 18px;
       font-size: 16px;
       color: #333;
       border-bottom: 1px solid #f7f7f7;
@@ -1044,21 +1101,32 @@
 
     .region-side-index {
       position: absolute;
-      right: 4px;
+      right: 8px;
       top: 50%;
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
       gap: 2px;
-      z-index: 1;
-      pointer-events: none;
+      z-index: 3;
+      pointer-events: auto;
+      user-select: none;
     }
 
     .region-side-index span {
+      width: 22px;
+      height: 22px;
       font-size: 11px;
       color: #999;
-      line-height: 14px;
+      line-height: 22px;
       text-align: center;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .region-side-index span.active {
+      background: #ff4d4f;
+      color: #fff;
+      font-weight: 600;
     }
 
     .oversea-list {
@@ -1464,7 +1532,7 @@
                 class="region-top-tab"
                 :class="{ active: regionSelectorTab === 'oversea' }"
                 @click="switchRegionSelectorTab('oversea')"
-              >港澳台及海外</div>
+              >港澳台</div>
             </div>
             <div class="region-selector-close" @click="closeRegionSelector">×</div>
           </div>
@@ -1489,26 +1557,34 @@
                 <div class="region-block-title" style="margin-bottom:8px;">选择省份/地区</div>
               </div>
 
-              <div class="region-list-wrap">
+              <div class="region-list-wrap" ref="provinceListWrap" @scroll="handleRegionListScroll('province')">
                 <div
                   class="region-group"
                   v-for="group in groupedProvinceList"
                   :key="'province-group-' + group.letter"
+                  :data-letter="group.letter"
                 >
                   <div class="region-group-letter">{{ group.letter }}</div>
-                  <div
-                    class="region-list-item"
-                    v-for="item in group.list"
-                    :key="'province-' + item.name"
-                    @click="selectProvince(item.name)"
-                  >
-                    {{ item.name }}
+                  <div class="region-group-items">
+                    <div
+                      class="region-list-item"
+                      v-for="item in group.list"
+                      :key="'province-' + item.name"
+                      @click="selectProvince(item.name)"
+                    >
+                      {{ item.name }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="region-side-index">
-                  <span v-for="letter in provinceLetterList" :key="'p-index-' + letter">{{ letter }}</span>
-                </div>
+              </div>
+              <div class="region-side-index">
+                <span
+                  v-for="letter in provinceLetterList"
+                  :key="'p-index-' + letter"
+                  :class="{ active: regionIndexActive.province === letter }"
+                  @click="scrollToRegionLetter('province', letter)"
+                >{{ letter }}</span>
               </div>
             </template>
 
@@ -1521,27 +1597,35 @@
                 <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
               </div>
 
-              <div class="region-list-wrap">
+              <div class="region-list-wrap" ref="cityListWrap" @scroll="handleRegionListScroll('city')">
                 <div
                   class="region-group"
                   v-for="group in groupedCityList"
                   :key="'city-group-' + group.letter"
+                  :data-letter="group.letter"
                 >
                   <div class="region-group-letter">{{ group.letter }}</div>
-                  <div
-                    class="region-list-item"
-                    :class="{ active: regionTemp.city === item.name }"
-                    v-for="item in group.list"
-                    :key="'city-' + item.name"
-                    @click="selectCity(item.name)"
-                  >
-                    {{ item.name }}
+                  <div class="region-group-items">
+                    <div
+                      class="region-list-item"
+                      :class="{ active: regionTemp.city === item.name }"
+                      v-for="item in group.list"
+                      :key="'city-' + item.name"
+                      @click="selectCity(item.name)"
+                    >
+                      {{ item.name }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="region-side-index">
-                  <span v-for="letter in cityLetterList" :key="'c-index-' + letter">{{ letter }}</span>
-                </div>
+              </div>
+              <div class="region-side-index">
+                <span
+                  v-for="letter in cityLetterList"
+                  :key="'c-index-' + letter"
+                  :class="{ active: regionIndexActive.city === letter }"
+                  @click="scrollToRegionLetter('city', letter)"
+                >{{ letter }}</span>
               </div>
             </template>
 
@@ -1555,27 +1639,35 @@
                 <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
               </div>
 
-              <div class="region-list-wrap">
+              <div class="region-list-wrap" ref="districtListWrap" @scroll="handleRegionListScroll('district')">
                 <div
                   class="region-group"
                   v-for="group in groupedDistrictList"
                   :key="'district-group-' + group.letter"
+                  :data-letter="group.letter"
                 >
                   <div class="region-group-letter">{{ group.letter }}</div>
-                  <div
-                    class="region-list-item"
-                    :class="{ active: regionTemp.district === item.name }"
-                    v-for="item in group.list"
-                    :key="'district-' + item.name"
-                    @click="selectDistrict(item.name)"
-                  >
-                    {{ item.name }}
+                  <div class="region-group-items">
+                    <div
+                      class="region-list-item"
+                      :class="{ active: regionTemp.district === item.name }"
+                      v-for="item in group.list"
+                      :key="'district-' + item.name"
+                      @click="selectDistrict(item.name)"
+                    >
+                      {{ item.name }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="region-side-index">
-                  <span v-for="letter in districtLetterList" :key="'d-index-' + letter">{{ letter }}</span>
-                </div>
+              </div>
+              <div class="region-side-index">
+                <span
+                  v-for="letter in districtLetterList"
+                  :key="'d-index-' + letter"
+                  :class="{ active: regionIndexActive.district === letter }"
+                  @click="scrollToRegionLetter('district', letter)"
+                >{{ letter }}</span>
               </div>
             </template>
           </div>
@@ -1586,26 +1678,34 @@
                 <div class="region-block-title" style="margin-bottom:8px;">选择地区</div>
               </div>
 
-              <div class="region-list-wrap">
+              <div class="region-list-wrap" ref="overseaProvinceListWrap" @scroll="handleRegionListScroll('overseaProvince')">
                 <div
                   class="region-group"
                   v-for="group in groupedOverseaProvinceList"
                   :key="'oversea-province-group-' + group.letter"
+                  :data-letter="group.letter"
                 >
                   <div class="region-group-letter">{{ group.letter }}</div>
-                  <div
-                    class="region-list-item"
-                    v-for="item in group.list"
-                    :key="'oversea-province-' + item.name"
-                    @click="selectProvince(item.name)"
-                  >
-                    {{ item.name }}
+                  <div class="region-group-items">
+                    <div
+                      class="region-list-item"
+                      v-for="item in group.list"
+                      :key="'oversea-province-' + item.name"
+                      @click="selectProvince(item.name)"
+                    >
+                      {{ item.name }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="region-side-index">
-                  <span v-for="letter in overseaProvinceLetterList" :key="'op-index-' + letter">{{ letter }}</span>
-                </div>
+              </div>
+              <div class="region-side-index">
+                <span
+                  v-for="letter in overseaProvinceLetterList"
+                  :key="'op-index-' + letter"
+                  :class="{ active: regionIndexActive.overseaProvince === letter }"
+                  @click="scrollToRegionLetter('overseaProvince', letter)"
+                >{{ letter }}</span>
               </div>
             </template>
 
@@ -1618,27 +1718,35 @@
                 <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
               </div>
 
-              <div class="region-list-wrap">
+              <div class="region-list-wrap" ref="cityListWrap" @scroll="handleRegionListScroll('city')">
                 <div
                   class="region-group"
                   v-for="group in groupedCityList"
                   :key="'oversea-city-group-' + group.letter"
+                  :data-letter="group.letter"
                 >
                   <div class="region-group-letter">{{ group.letter }}</div>
-                  <div
-                    class="region-list-item"
-                    :class="{ active: regionTemp.city === item.name }"
-                    v-for="item in group.list"
-                    :key="'oversea-city-' + item.name"
-                    @click="selectCity(item.name)"
-                  >
-                    {{ item.name }}
+                  <div class="region-group-items">
+                    <div
+                      class="region-list-item"
+                      :class="{ active: regionTemp.city === item.name }"
+                      v-for="item in group.list"
+                      :key="'oversea-city-' + item.name"
+                      @click="selectCity(item.name)"
+                    >
+                      {{ item.name }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="region-side-index">
-                  <span v-for="letter in cityLetterList" :key="'oc-index-' + letter">{{ letter }}</span>
-                </div>
+              </div>
+              <div class="region-side-index">
+                <span
+                  v-for="letter in cityLetterList"
+                  :key="'oc-index-' + letter"
+                  :class="{ active: regionIndexActive.city === letter }"
+                  @click="scrollToRegionLetter('city', letter)"
+                >{{ letter }}</span>
               </div>
             </template>
 
@@ -1652,27 +1760,35 @@
                 <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
               </div>
 
-              <div class="region-list-wrap">
+              <div class="region-list-wrap" ref="districtListWrap" @scroll="handleRegionListScroll('district')">
                 <div
                   class="region-group"
                   v-for="group in groupedDistrictList"
                   :key="'oversea-district-group-' + group.letter"
+                  :data-letter="group.letter"
                 >
                   <div class="region-group-letter">{{ group.letter }}</div>
-                  <div
-                    class="region-list-item"
-                    :class="{ active: regionTemp.district === item.name }"
-                    v-for="item in group.list"
-                    :key="'oversea-district-' + item.name"
-                    @click="selectDistrict(item.name)"
-                  >
-                    {{ item.name }}
+                  <div class="region-group-items">
+                    <div
+                      class="region-list-item"
+                      :class="{ active: regionTemp.district === item.name }"
+                      v-for="item in group.list"
+                      :key="'oversea-district-' + item.name"
+                      @click="selectDistrict(item.name)"
+                    >
+                      {{ item.name }}
+                    </div>
                   </div>
                 </div>
 
-                <div class="region-side-index">
-                  <span v-for="letter in districtLetterList" :key="'od-index-' + letter">{{ letter }}</span>
-                </div>
+              </div>
+              <div class="region-side-index">
+                <span
+                  v-for="letter in districtLetterList"
+                  :key="'od-index-' + letter"
+                  :class="{ active: regionIndexActive.district === letter }"
+                  @click="scrollToRegionLetter('district', letter)"
+                >{{ letter }}</span>
               </div>
             </template>
           </div>
@@ -1721,6 +1837,18 @@
       </div>
     </div>
   </transition>
+
+  <transition name="fade-mask">
+    <div class="confirm-mask" v-show="showVantAlert">
+      <div class="confirm-dialog vant-alert-dialog">
+        <div class="vant-alert-header">{{ vantAlert.title }}</div>
+        <div class="vant-alert-body">{{ vantAlert.message }}</div>
+        <div class="vant-alert-footer">
+          <button class="vant-alert-btn" @click="closeVantAlert">确定</button>
+        </div>
+      </div>
+    </div>
+  </transition>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
@@ -1738,6 +1866,7 @@
         showSearchPage: false,
         showRiskConfirm: false,
         showPasteConfirm: false,
+        showVantAlert: false,
         showRegionSelector: false,
         isParsingPaste: false,
 
@@ -1798,6 +1927,10 @@
           regionText: '',
           detailAddress: ''
         },
+        vantAlert: {
+          title: '温馨提示',
+          message: ''
+        },
 
         regionDisplayText: '',
         regionForm: {
@@ -1813,6 +1946,12 @@
           province: '',
           city: '',
           district: ''
+        },
+        regionIndexActive: {
+          province: '',
+          city: '',
+          district: '',
+          overseaProvince: ''
         },
 
         form: {
@@ -1959,7 +2098,8 @@
       groupByLetter: function (list) {
         var map = {};
         (list || []).forEach(function (item) {
-          var letter = item.letter || '#';
+          var letter = item.letter || '';
+          if (!/^[A-Z]$/.test(letter)) return;
           if (!map[letter]) map[letter] = [];
           map[letter].push(item);
         });
@@ -1971,6 +2111,64 @@
             list: map[letter]
           };
         });
+      },
+
+      getRegionListWrapRef: function (type) {
+        var refMap = {
+          province: 'provinceListWrap',
+          city: 'cityListWrap',
+          district: 'districtListWrap',
+          overseaProvince: 'overseaProvinceListWrap'
+        };
+        return refMap[type] || '';
+      },
+
+      scrollToRegionLetter: function (type, letter) {
+        var refName = this.getRegionListWrapRef(type);
+        var wrap = refName ? this.$refs[refName] : null;
+        if (!wrap) return;
+
+        var target = wrap.querySelector('[data-letter="' + letter + '"]');
+        if (!target) return;
+
+        this.regionIndexActive[type] = letter;
+        wrap.scrollTop = target.offsetTop;
+      },
+
+      handleRegionListScroll: function (type) {
+        var refName = this.getRegionListWrapRef(type);
+        var wrap = refName ? this.$refs[refName] : null;
+        if (!wrap) return;
+
+        var groups = wrap.querySelectorAll('.region-group[data-letter]');
+        if (!groups || !groups.length) return;
+
+        var activeLetter = '';
+        for (var i = 0; i < groups.length; i++) {
+          if (groups[i].offsetTop - wrap.scrollTop <= 12) {
+            activeLetter = groups[i].getAttribute('data-letter') || '';
+          } else {
+            break;
+          }
+        }
+
+        if (!activeLetter) {
+          activeLetter = groups[0].getAttribute('data-letter') || '';
+        }
+
+        this.regionIndexActive[type] = activeLetter;
+      },
+
+      showAlert: function (message, title) {
+        this.vantAlert = {
+          title: title || '温馨提示',
+          message: message || ''
+        };
+        this.showVantAlert = true;
+      },
+
+      closeVantAlert: function () {
+        this.showVantAlert = false;
       },
 
       switchMainTab: function (tab) {
@@ -1993,7 +2191,7 @@
 
       initBaseServices: function () {
         if (typeof BMapGL === 'undefined') {
-          alert('百度地图加载失败');
+          this.showAlert('百度地图加载失败');
           return;
         }
         if (!this.geolocation) {
@@ -2065,7 +2263,7 @@
 
       useCurrentLocation: function () {
         if (!this.currentLocation.point) {
-          alert('当前位置还未获取成功');
+          this.showAlert('当前位置还未获取成功');
           return;
         }
 
@@ -2518,6 +2716,12 @@
         } else {
           this.regionStep = 'province';
         }
+
+        var self = this;
+        this.$nextTick(function () {
+          var indexType = self.regionSelectorTab === 'oversea' ? 'overseaProvince' : self.regionStep;
+          self.handleRegionListScroll(indexType);
+        });
       },
 
       closeRegionSelector: function () {
@@ -2532,17 +2736,29 @@
           district: ''
         };
         this.regionStep = 'province';
+        var self = this;
+        this.$nextTick(function () {
+          self.handleRegionListScroll(tab === 'oversea' ? 'overseaProvince' : 'province');
+        });
       },
 
       goBackToProvinceStep: function () {
         this.regionTemp.city = '';
         this.regionTemp.district = '';
         this.regionStep = 'province';
+        var self = this;
+        this.$nextTick(function () {
+          self.handleRegionListScroll(self.regionSelectorTab === 'oversea' ? 'overseaProvince' : 'province');
+        });
       },
 
       goBackToCityStep: function () {
         this.regionTemp.district = '';
         this.regionStep = 'city';
+        var self = this;
+        this.$nextTick(function () {
+          self.handleRegionListScroll('city');
+        });
       },
 
       selectHotCity: function (item) {
@@ -2567,10 +2783,18 @@
         if (children.length === 1 && children[0].text === '市辖区') {
           this.regionTemp.city = '市辖区';
           this.regionStep = 'district';
+          var self = this;
+          this.$nextTick(function () {
+            self.handleRegionListScroll('district');
+          });
           return;
         }
 
         this.regionStep = 'city';
+        var self = this;
+        this.$nextTick(function () {
+          self.handleRegionListScroll('city');
+        });
       },
 
       selectCity: function (name) {
@@ -2581,6 +2805,10 @@
         var districtList = cityNode && cityNode.children ? cityNode.children : [];
         if (districtList.length) {
           this.regionStep = 'district';
+          var self = this;
+          this.$nextTick(function () {
+            self.handleRegionListScroll('district');
+          });
         } else {
           this.applyRegionSelection();
         }
@@ -2621,19 +2849,19 @@
       readClipboardText: async function () {
         try {
           if (!navigator.clipboard || !navigator.clipboard.readText) {
-            alert('当前环境不支持直接读取剪贴板，请手动粘贴');
+            this.showAlert('当前环境不支持直接读取剪贴板，请手动粘贴');
             return;
           }
 
           var text = await navigator.clipboard.readText();
           if (!text) {
-            alert('剪贴板为空');
+            this.showAlert('剪贴板为空');
             return;
           }
 
           this.pasteText = text;
         } catch (e) {
-          alert('读取剪贴板失败，请手动粘贴');
+          this.showAlert('读取剪贴板失败，请手动粘贴');
         }
       },
 
@@ -2651,7 +2879,7 @@
 
         if (!text) {
           this.isParsingPaste = false;
-          alert('请先粘贴地址内容');
+          this.showAlert('请先粘贴地址内容');
           return;
         }
 
@@ -3170,17 +3398,17 @@
 
         if (this.activeTab === 'map') {
           if (!this.selectedLocation.address && !this.sheetAddressText) {
-            alert('请先选择或识别地址');
+            this.showAlert('请先选择或识别地址');
             return;
           }
           payload = this.buildMapPayload();
         } else {
           if (!this.regionDisplayText) {
-            alert('请先选择所在地区');
+            this.showAlert('请先选择所在地区');
             return;
           }
           if (!this.regionForm.detailAddress) {
-            alert('请填写详细地址');
+            this.showAlert('请填写详细地址');
             return;
           }
           payload = this.buildRegionPayload();
@@ -3244,10 +3472,10 @@
       '绵': 'M', '德': 'D', '乐': 'L', '宜': 'Y', '泸': 'L', '自': 'Z', '拉': 'L',
       '乌': 'W', '克': 'K', '喀': 'K', '伊': 'Y', '昆': 'K', '曲': 'Q', '红': 'H',
       '丽': 'L', '杭': 'H', '嘉': 'J', '金': 'J', '宁': 'N', '衢': 'Q', '绍': 'S',
-      '台': 'T', '温': 'W', '舟': 'Z'
+      '台': 'T', '温': 'W', '舟': 'Z', '香': 'X', '澳': 'A'
     };
     var first = (name || '').charAt(0);
-    return map[first] || '#';
+    return map[first] || '';
   }
 </script>
 </body>
