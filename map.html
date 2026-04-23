@@ -591,7 +591,6 @@
       background: #fff;
       border-bottom: 1px solid #f2f2f2;
       font-size: 18px;
-      font-weight: 600;
       flex-shrink: 0;
       color: #222;
     }
@@ -603,8 +602,8 @@
       top: 50%;
       width: 14px;
       height: 14px;
-      border-left: 2.5px solid #202020;
-      border-bottom: 2.5px solid #202020;
+      border-left: 2px solid #202020;
+      border-bottom: 2px solid #202020;
       transform-origin: center;   
     }
 
@@ -689,6 +688,25 @@
       z-index: 12;
       pointer-events: none;
       background: url("./research-location-icon.png") center center / 48px 48px no-repeat;
+    }
+
+    .center-marker.bouncing {
+      animation: marker-bounce-once 0.52s ease-out;
+    }
+
+    @keyframes marker-bounce-once {
+      0% {
+        transform: translate(-50%, -100%) scale(1);
+      }
+      22% {
+        transform: translate(-50%, -136%) scale(1.03);
+      }
+      48% {
+        transform: translate(-50%, -96%) scale(0.97);
+      }
+      100% {
+        transform: translate(-50%, -100%) scale(1);
+      }
     }
 
     .center-marker-current-dot {
@@ -1855,7 +1873,7 @@
           {{ nearbyList[0].title || nearbyList[0].address }}
         </div>
         <div class="center-marker-current-dot" :style="currentLocationMarkerStyle"></div>
-        <div class="center-marker"></div>
+        <div class="center-marker" :class="{ bouncing: isMarkerBouncing }"></div>
         <button
           type="button"
           ref="mapLocateBtn"
@@ -2397,6 +2415,9 @@
         showRegionSelector: false,
         showPasteBoard: false,
         isParsingPaste: false,
+        isMarkerBouncing: false,
+        isPickerMapDragging: false,
+        markerBounceTimer: null,
 
         // 地图选址页显示的省市区文本（用于在地址选择面板中显示已选择的区域）
         sheetProviceCityDistrict: '',
@@ -3255,6 +3276,23 @@
         });
       },
 
+      triggerMarkerBounce: function () {
+        const self = this;
+        this.isMarkerBouncing = false;
+
+        if (this.markerBounceTimer) {
+          clearTimeout(this.markerBounceTimer);
+        }
+
+        this.$nextTick(function () {
+          self.isMarkerBouncing = true;
+          self.markerBounceTimer = setTimeout(function () {
+            self.isMarkerBouncing = false;
+            self.markerBounceTimer = null;
+          }, 760);
+        });
+      },
+
       openCityPickerPage: function () {
         this.showCityPickerPage = true;
         this.cityPickerKeyword = '';
@@ -3547,9 +3585,14 @@
           this.pickerMapInstance.addEventListener('moveend', function () {
             self.loadNearbyByCenter();
             self.updateCurrentLocationMarker();
+            if (self.isPickerMapDragging) {
+              self.isPickerMapDragging = false;
+              self.triggerMarkerBounce();
+            }
           });
 
           this.pickerMapInstance.addEventListener('moving', function () {
+            self.isPickerMapDragging = true;
             self.updateCurrentLocationMarker();
           });
 
