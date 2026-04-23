@@ -2673,8 +2673,8 @@
       // 会根据 cityData3 中的实际数据找到对应的完整省市区信息
       // ================================================
       hotRegionList: function () {
-        var self = this;
-        var hotConfig = [
+        const self = this;
+        const hotConfig = [
           { city: '北京市', district: '朝阳区' },
           { city: '上海市', district: '浦东新区' },
           { city: '广州市', district: '天河区' },
@@ -2698,7 +2698,7 @@
       // 返回格式：[{letter: 'A', list: [{name: '安徽省', letter: 'A'}, ...]}, ...]
       // ================================================
       groupedProvinceList: function () {
-        var list = (this.domesticRegionTree || []).map(function (item) {
+        let list = (this.domesticRegionTree || []).map(function (item) {
           return {
             name: item.text,
             letter: getLetter(item.text)
@@ -2721,7 +2721,7 @@
       // 按字母分组后的港澳台及海外省份列表
       // ================================================
       groupedOverseaProvinceList: function () {
-        var list = (this.overseaRegionTree || []).map(function (item) {
+        let list = (this.overseaRegionTree || []).map(function (item) {
           return {
             name: item.text,
             letter: getLetter(item.text)
@@ -2760,10 +2760,10 @@
       // 如果是直辖市（市辖区），则显示省份本身作为城市
       // ================================================
       currentCityList: function () {
-        var provinceNode = this.currentProvinceNode;
+        const provinceNode = this.currentProvinceNode;
         if (!provinceNode) return [];
 
-        var children = provinceNode.children || [];
+        const children = provinceNode.children || [];
         if (children.length === 1 && children[0].text === '市辖区') {
           return [{
             name: provinceNode.text,
@@ -2771,7 +2771,7 @@
           }];
         }
 
-        var list = children.map(function (item) {
+        let list = children.map(function (item) {
           return {
             name: item.text,
             letter: getLetter(item.text)
@@ -2801,10 +2801,10 @@
       // 根据已选的省份和城市查找对应的区县数据
       // ================================================
       currentDistrictList: function () {
-        var cityNode = this.findCityNode(this.regionTemp.province, this.regionTemp.city);
+        const cityNode = this.findCityNode(this.regionTemp.province, this.regionTemp.city);
         if (!cityNode) return [];
 
-        var list = (cityNode.children || []).map(function (item) {
+        let list = (cityNode.children || []).map(function (item) {
           return {
             name: item.text,
             letter: getLetter(item.text)
@@ -2836,7 +2836,7 @@
       // 则返回 [{step: 'province', label: '北京市'}, {step: 'city', label: '北京市'}, {step: 'district', label: '朝阳区'}]
       // ================================================
       regionSelectorCrumbs: function () {
-        var list = [];
+        let list = [];
         if (this.regionTemp.province) {
           list.push({
             step: 'province',
@@ -2873,8 +2873,8 @@
       // 排除"市辖区"这类特殊名称
       // ================================================
       cityPickerSourceList: function () {
-        var result = [];
-        var walk = function (list) {
+        let result = [];
+        const walk = function (list) {
           (list || []).forEach(function (item) {
             if (!item || !item.text) return;
             if (item.text !== '市辖区') {
@@ -2899,7 +2899,7 @@
       // 如果关键词为空，则返回所有城市
       // ================================================
       cityPickerFilteredList: function () {
-        var keyword = (this.cityPickerKeyword || '').trim();
+        const keyword = (this.cityPickerKeyword || '').trim();
         if (!keyword) return this.cityPickerSourceList;
 
         return this.cityPickerSourceList.filter(function (item) {
@@ -2944,15 +2944,15 @@
       // 用于实现省份/城市/区县列表按拼音首字母分组显示
       // ================================================
       groupByLetter: function (list) {
-        var map = {};
+        const map = {};
         (list || []).forEach(function (item) {
-          var letter = item.letter || '';
+          const letter = item.letter || '';
           if (!/^[A-Z]$/.test(letter)) return;
           if (!map[letter]) map[letter] = [];
           map[letter].push(item);
         });
 
-        var letters = Object.keys(map).sort();
+        const letters = Object.keys(map).sort();
         return letters.map(function (letter) {
           return {
             letter: letter,
@@ -2967,7 +2967,7 @@
       // 用于在滚动时获取对应的DOM元素
       // ================================================
       getRegionListWrapRef: function (type) {
-        var refMap = {
+        const refMap = {
           province: 'provinceListWrap',
           city: 'cityListWrap',
           district: 'districtListWrap',
@@ -2983,11 +2983,11 @@
       // letter - 要滚动到的目标字母
       // ================================================
       scrollToRegionLetter: function (type, letter) {
-        var refName = this.getRegionListWrapRef(type);
-        var wrap = refName ? this.$refs[refName] : null;
+        const refName = this.getRegionListWrapRef(type);
+        const wrap = refName ? this.$refs[refName] : null;
         if (!wrap) return;
 
-        var target = wrap.querySelector('[data-letter="' + letter + '"]');
+        const target = wrap.querySelector('[data-letter="' + letter + '"]');
         if (!target) return;
 
         this.regionIndexActive[type] = letter;
@@ -2995,15 +2995,15 @@
       },
 
       handleRegionListScroll: function (type) {
-        var refName = this.getRegionListWrapRef(type);
-        var wrap = refName ? this.$refs[refName] : null;
+        const refName = this.getRegionListWrapRef(type);
+        const wrap = refName ? this.$refs[refName] : null;
         if (!wrap) return;
 
-        var groups = wrap.querySelectorAll('.region-group[data-letter]');
+        const groups = wrap.querySelectorAll('.region-group[data-letter]');
         if (!groups || !groups.length) return;
 
-        var activeLetter = '';
-        for (var i = 0; i < groups.length; i++) {
+        let activeLetter = '';
+        for (let i = 0; i < groups.length; i++) {
           if (groups[i].offsetTop - wrap.scrollTop <= 12) {
             activeLetter = groups[i].getAttribute('data-letter') || '';
           } else {
@@ -3041,7 +3041,7 @@
       // 使城市名称更简洁（如："北京市" -> "北京"）
       // ================================================
       normalizeCityPickerName: function (name) {
-        var value = (name || '').trim();
+        let value = (name || '').trim();
         if (!value) return '';
         return value
           .replace(/特别行政区$/, '')
@@ -3098,7 +3098,7 @@
       },
 
       onRegionDetailInput: function () {
-        var self = this;
+        const self = this;
         if (this.regionSuggestTimer) {
           clearTimeout(this.regionSuggestTimer);
         }
@@ -3114,15 +3114,15 @@
       },
 
       searchRegionSuggestions: function () {
-        var self = this;
+        const self = this;
         this.initBaseServices();
-        var keyword = (this.regionForm.detailAddress || '').trim();
+        const keyword = (this.regionForm.detailAddress || '').trim();
         if (!keyword) {
           this.clearRegionSuggest();
           return;
         }
 
-        var regionKeyword = this.getRegionParts(
+        const regionKeyword = this.getRegionParts(
           this.regionForm.province,
           this.regionForm.city,
           this.regionForm.district
@@ -3133,8 +3133,8 @@
           return;
         }
 
-        var mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
-        var localSearch = new BMapGL.LocalSearch(mapContext, {
+        const mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
+        const localSearch = new BMapGL.LocalSearch(mapContext, {
           pageCapacity: 6,
           onSearchComplete: function (results) {
             if (!results || localSearch.getStatus() !== 0) {
@@ -3142,15 +3142,15 @@
               return;
             }
 
-            var list = [];
-            var count = results.getCurrentNumPois();
-            for (var i = 0; i < count; i++) {
-              var poi = results.getPoi(i);
+            let list = [];
+            const count = results.getCurrentNumPois();
+            for (let i = 0; i < count; i++) {
+              const poi = results.getPoi(i);
               if (!poi) continue;
 
-              var province = self.formatProvinceName(poi.province || '');
-              var city = poi.city || '';
-              var district = poi.district || '';
+              const province = self.formatProvinceName(poi.province || '');
+              const city = poi.city || '';
+              const district = poi.district || '';
 
               if (self.regionForm.province && province && province !== self.regionForm.province) continue;
               if (self.regionForm.city && self.regionForm.city !== '市辖区' && city && city !== self.regionForm.city) continue;
@@ -3226,9 +3226,9 @@
       },
 
       bindMapLocateButton: function () {
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
-          var btn = self.$refs.mapLocateBtn;
+          const btn = self.$refs.mapLocateBtn;
           if (!btn) return;
 
           btn.onclick = function (e) {
@@ -3259,7 +3259,7 @@
         this.showCityPickerPage = true;
         this.cityPickerKeyword = '';
         this.cityPickerIndexActive = this.cityPickerLetterList[0] || '';
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
           if (self.$refs.cityPickerInput) {
             self.$refs.cityPickerInput.focus();
@@ -3273,9 +3273,9 @@
       },
 
       onCityPickerInput: function () {
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
-          var wrap = self.$refs.cityPickerListWrap;
+          const wrap = self.$refs.cityPickerListWrap;
           if (wrap) {
             wrap.scrollTop = 0;
           }
@@ -3291,7 +3291,7 @@
           clearTimeout(this.cityPickerToastTimer);
         }
 
-        var self = this;
+        const self = this;
         this.cityPickerToastTimer = setTimeout(function () {
           self.cityPickerToastLetter = '';
           self.cityPickerToastTimer = null;
@@ -3299,11 +3299,11 @@
       },
 
       scrollToCityPickerLetter: function (letter) {
-        var wrap = this.$refs.cityPickerListWrap;
+        const wrap = this.$refs.cityPickerListWrap;
         if (!wrap || !letter) return;
 
         this.showCityPickerLetterToast(letter);
-        var target = wrap.querySelector('[data-letter="' + letter + '"]');
+        const target = wrap.querySelector('[data-letter="' + letter + '"]');
         if (!target) return;
 
         this.cityPickerIndexActive = letter;
@@ -3311,14 +3311,14 @@
       },
 
       handleCityPickerListScroll: function () {
-        var wrap = this.$refs.cityPickerListWrap;
+        const wrap = this.$refs.cityPickerListWrap;
         if (!wrap) return;
 
-        var groups = wrap.querySelectorAll('.city-picker-group[data-letter]');
+        const groups = wrap.querySelectorAll('.city-picker-group[data-letter]');
         if (!groups || !groups.length) return;
 
-        var activeLetter = '';
-        for (var i = 0; i < groups.length; i++) {
+        let activeLetter = '';
+        for (let i = 0; i < groups.length; i++) {
           if (groups[i].offsetTop - wrap.scrollTop <= 12) {
             activeLetter = groups[i].getAttribute('data-letter') || '';
           } else {
@@ -3334,7 +3334,7 @@
       },
 
       selectCityPickerItem: function (name) {
-        var value = (name || '').trim();
+        let value = (name || '').trim();
         if (!value) return;
 
         this.pickerCityText = value;
@@ -3346,7 +3346,7 @@
       },
 
       centerPickerMapToCity: function (name) {
-        var self = this;
+        const self = this;
         if (!name) return;
 
         this.initBaseServices();
@@ -3368,8 +3368,8 @@
         }
 
         try {
-          var pixel = this.pickerMapInstance.pointToPixel(this.currentLocation.point);
-          var size = this.pickerMapInstance.getSize ? this.pickerMapInstance.getSize() : null;
+          const pixel = this.pickerMapInstance.pointToPixel(this.currentLocation.point);
+          const size = this.pickerMapInstance.getSize ? this.pickerMapInstance.getSize() : null;
 
           if (!pixel || !size || pixel.x < -40 || pixel.y < -40 || pixel.x > size.width + 40 || pixel.y > size.height + 40) {
             this.currentLocationMarkerStyle.display = 'none';
@@ -3393,7 +3393,7 @@
       // 如果用户还没有选择过地址，会自动将定位结果设为选中地址
       // ================================================
       fetchCurrentLocation: function () {
-        var self = this;
+        const self = this;
         if (!this.geolocation) return;
 
         this.geolocation.getCurrentPosition(function (r) {
@@ -3425,15 +3425,15 @@
       // ================================================
       reversePointToAddress: function (point, callback) {
         if (!this.geocoder || !point) return;
-        var self = this;
+        const self = this;
 
         this.geocoder.getLocation(point, function (rs) {
           if (!rs) return;
 
-          var ac = rs.addressComponents || {};
-          var firstPoi = rs.surroundingPois && rs.surroundingPois[0] ? rs.surroundingPois[0] : null;
+          const ac = rs.addressComponents || {};
+          const firstPoi = rs.surroundingPois && rs.surroundingPois[0] ? rs.surroundingPois[0] : null;
 
-          var data = {
+          const data = {
             point: point,
             title: firstPoi ? firstPoi.title : (ac.street || '当前位置'),
             name: firstPoi ? firstPoi.title : (ac.street || '当前位置'),
@@ -3478,12 +3478,12 @@
       // 4. 更新 sheetProviceCityDistrict（地图选址页显示的省市区）
       // ================================================
       applyMapLocationToSheet: function (location) {
-        var province = location && location.province ? location.province : '';
-        var city = location && location.city ? location.city : '';
-        var district = location && location.district ? location.district : '';
-        var address = location && location.address ? location.address : '';
-        var name = location && location.name ? location.name : '';
-        var title = location && location.title ? location.title : '';
+        const province = location && location.province ? location.province : '';
+        const city = location && location.city ? location.city : '';
+        const district = location && location.district ? location.district : '';
+        const address = location && location.address ? location.address : '';
+        const name = location && location.name ? location.name : '';
+        const title = location && location.title ? location.title : '';
 
         this.selectedLocation = Object.assign({
           point: null,
@@ -3510,7 +3510,7 @@
       // 会初始化百度地图并显示在页面上
       // ================================================
       openLocationPicker: function () {
-        var self = this;
+        const self = this;
         this.showLocationPicker = true;
 
         this.$nextTick(function () {
@@ -3530,8 +3530,8 @@
       // 如果已有选中的位置，会以该位置为中心显示地图
       // ================================================
       initPickerMap: function () {
-        var self = this;
-        var mapEl = this.$refs.pickerMap;
+        const self = this;
+        const mapEl = this.$refs.pickerMap;
         if (!mapEl) return;
 
         if (!this.pickerGeocoder) {
@@ -3540,7 +3540,7 @@
 
         if (!this.pickerMapInstance) {
           this.pickerMapInstance = new BMapGL.Map(mapEl);
-          var defaultPoint = new BMapGL.Point(116.404, 39.915);
+          const defaultPoint = new BMapGL.Point(116.404, 39.915);
           this.pickerMapInstance.centerAndZoom(defaultPoint, 16);
           this.pickerMapInstance.enableScrollWheelZoom(true);
 
@@ -3561,7 +3561,7 @@
           this.pickerMapInstance.checkResize();
         }
 
-        var targetPoint = this.currentLocation.point || this.selectedLocation.point;
+        const targetPoint = this.currentLocation.point || this.selectedLocation.point;
         if (targetPoint) {
           this.pickerMapInstance.centerAndZoom(targetPoint, 18);
           this.loadNearbyByCenter();
@@ -3574,7 +3574,7 @@
       },
 
       fetchCurrentLocationForPicker: function () {
-        var self = this;
+        const self = this;
         if (!this.geolocation) return;
 
         this.geolocation.getCurrentPosition(function (r) {
@@ -3625,20 +3625,20 @@
       },
 
       loadNearbyByCenter: function () {
-        var self = this;
+        const self = this;
         if (!this.pickerMapInstance || !this.pickerGeocoder) return;
 
-        var center = this.pickerMapInstance.getCenter();
+        const center = this.pickerMapInstance.getCenter();
         if (!center) return;
 
         this.pickerGeocoder.getLocation(center, function (rs) {
           if (!rs) return;
 
-          var ac = rs.addressComponents || {};
+          const ac = rs.addressComponents || {};
           self.pickerCityText = ac.city || ac.province || '当前城市';
 
-          var list = [];
-          var pois = rs.surroundingPois || [];
+          let list = [];
+          const pois = rs.surroundingPois || [];
 
           list.push({
             point: center,
@@ -3652,8 +3652,8 @@
             distanceText: ''
           });
 
-          for (var i = 0; i < pois.length; i++) {
-            var item = pois[i];
+          for (let i = 0; i < pois.length; i++) {
+            const item = pois[i];
             if (!item || !item.point) continue;
 
             list.push({
@@ -3682,17 +3682,17 @@
       // ================================================
       calcDistanceText: function (p1, p2) {
         try {
-          var rad = function (d) {
+          const rad = function (d) {
             return d * Math.PI / 180;
           };
-          var R = 6378137;
-          var dLat = rad(p2.lat - p1.lat);
-          var dLng = rad(p2.lng - p1.lng);
-          var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          const R = 6378137;
+          const dLat = rad(p2.lat - p1.lat);
+          const dLng = rad(p2.lng - p1.lng);
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(rad(p1.lat)) * Math.cos(rad(p2.lat)) *
             Math.sin(dLng / 2) * Math.sin(dLng / 2);
-          var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          var d = Math.round(R * c);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const d = Math.round(R * c);
           return d < 1000 ? (d + 'm') : ((d / 1000).toFixed(1) + 'km');
         } catch (e) {
           return '';
@@ -3725,7 +3725,7 @@
         this.showSearchPage = true;
         this.searchPageKeyword = this.pickerKeyword || '';
         this.searchResultList = [];
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
           if (self.$refs.searchInput) {
             self.$refs.searchInput.focus();
@@ -3743,7 +3743,7 @@
       },
 
       onSearchPageInput: function () {
-        var self = this;
+        const self = this;
         if (this.searchPageTimer) clearTimeout(this.searchPageTimer);
 
         if (!this.searchPageKeyword) {
@@ -3766,13 +3766,13 @@
       // 返回的列表包含每个POI的坐标、名称、地址、省市区等信息
       // ================================================
       searchAddress: function (keyword, callback) {
-        var self = this;
+        const self = this;
         if (!keyword || !this.pickerMapInstance) {
           callback([]);
           return;
         }
 
-        var localSearch = new BMapGL.LocalSearch(this.pickerMapInstance, {
+        const localSearch = new BMapGL.LocalSearch(this.pickerMapInstance, {
           pageCapacity: 20,
           onSearchComplete: function (results) {
             if (!results || localSearch.getStatus() !== 0) {
@@ -3780,12 +3780,12 @@
               return;
             }
 
-            var list = [];
-            var count = results.getCurrentNumPois();
-            var center = self.pickerMapInstance.getCenter();
+            let list = [];
+            const count = results.getCurrentNumPois();
+            const center = self.pickerMapInstance.getCenter();
 
-            for (var i = 0; i < count; i++) {
-              var poi = results.getPoi(i);
+            for (let i = 0; i < count; i++) {
+              const poi = results.getPoi(i);
               if (!poi || !poi.point) continue;
 
               list.push({
@@ -3809,7 +3809,7 @@
       },
 
       chooseSearchResult: function (item) {
-        var self = this;
+        const self = this;
         this.pickerKeyword = item.title || '';
 
         if (!item || !item.point) {
@@ -3818,7 +3818,7 @@
         }
 
         this.reversePointToAddress(item.point, function (data) {
-          var merged = Object.assign({}, item, data || {});
+          const merged = Object.assign({}, item, data || {});
           merged.title = item.title || merged.title || '';
           merged.name = item.title || merged.name || '';
           merged.address = item.address || merged.address || '';
@@ -3830,8 +3830,8 @@
         if (!text) return '';
         if (!keyword) return this.escapeHtml(text);
 
-        var safeText = this.escapeHtml(text);
-        var safeKeyword = this.escapeReg(keyword);
+        const safeText = this.escapeHtml(text);
+        const safeKeyword = this.escapeReg(keyword);
         return safeText.replace(new RegExp('(' + safeKeyword + ')', 'ig'), '<span class="match-text">$1</span>');
       },
 
@@ -3849,10 +3849,10 @@
       },
 
       formatProvinceName: function (name) {
-        var value = (name || '').trim();
+        let value = (name || '').trim();
         if (!value) return '';
 
-        var provinceMap = {
+        const provinceMap = {
           '北京': '北京市',
           '天津': '天津市',
           '上海': '上海市',
@@ -3879,10 +3879,10 @@
       },
 
       getRegionParts: function (province, city, district) {
-        var parts = [];
-        var fullProvince = this.formatProvinceName(province || '');
-        var cityName = city || '';
-        var districtName = district || '';
+        let parts = [];
+        const fullProvince = this.formatProvinceName(province || '');
+        const cityName = city || '';
+        const districtName = district || '';
 
         if (fullProvince) {
           parts.push(fullProvince);
@@ -3900,10 +3900,10 @@
       },
 
       getProvinceSelectorValue: function (name) {
-        var value = (name || '').trim();
+        let value = (name || '').trim();
         if (!value) return '';
 
-        var reverseProvinceMap = {
+        const reverseProvinceMap = {
           '北京市': '北京',
           '天津市': '天津',
           '上海市': '上海',
@@ -3926,10 +3926,10 @@
       },
 
       findProvinceNode: function (name) {
-        var fullName = this.formatProvinceName(name);
-        var list = this.currentRegionTree || [];
+        const fullName = this.formatProvinceName(name);
+        const list = this.currentRegionTree || [];
 
-        for (var i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i++) {
           if (list[i].text === fullName) {
             return list[i];
           }
@@ -3939,15 +3939,15 @@
       },
 
       findCityNode: function (provinceName, cityName) {
-        var provinceNode = this.findProvinceNode(provinceName);
+        const provinceNode = this.findProvinceNode(provinceName);
         if (!provinceNode) return null;
 
-        var children = provinceNode.children || [];
+        const children = provinceNode.children || [];
         if (children.length === 1 && children[0].text === '市辖区' && cityName === provinceNode.text) {
           return children[0];
         }
 
-        for (var i = 0; i < children.length; i++) {
+        for (let i = 0; i < children.length; i++) {
           if (children[i].text === cityName) {
             return children[i];
           }
@@ -3957,11 +3957,11 @@
       },
 
       findHotCitySelection: function (config) {
-        var list = this.domesticRegionTree || [];
+        const list = this.domesticRegionTree || [];
 
-        for (var i = 0; i < list.length; i++) {
-          var provinceNode = list[i];
-          var children = provinceNode.children || [];
+        for (let i = 0; i < list.length; i++) {
+          const provinceNode = list[i];
+          const children = provinceNode.children || [];
 
           if (children.length === 1 && children[0].text === '市辖区' && provinceNode.text === config.city) {
             return {
@@ -3971,7 +3971,7 @@
             };
           }
 
-          for (var j = 0; j < children.length; j++) {
+          for (let j = 0; j < children.length; j++) {
             if (children[j].text === config.city) {
               return {
                 province: provinceNode.text,
@@ -4005,9 +4005,9 @@
           this.regionStep = 'province';
         }
 
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
-          var indexType = self.regionSelectorTab === 'oversea' ? 'overseaProvince' : self.regionStep;
+          const indexType = self.regionSelectorTab === 'oversea' ? 'overseaProvince' : self.regionStep;
           self.handleRegionListScroll(indexType);
         });
       },
@@ -4026,9 +4026,9 @@
         if (step === 'district' && !this.regionTemp.district) return;
 
         this.regionStep = step;
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
-          var indexType = step;
+          let indexType = step;
           if (step === 'province' && self.regionSelectorTab === 'oversea') {
             indexType = 'overseaProvince';
           }
@@ -4044,7 +4044,7 @@
           district: ''
         };
         this.regionStep = 'province';
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
           self.handleRegionListScroll(tab === 'oversea' ? 'overseaProvince' : 'province');
         });
@@ -4069,8 +4069,8 @@
         this.regionTemp.province = name;
         this.regionTemp.city = '';
         this.regionTemp.district = '';
-        var provinceNode = this.findProvinceNode(name);
-        var children = provinceNode && provinceNode.children ? provinceNode.children : [];
+        const provinceNode = this.findProvinceNode(name);
+        const children = provinceNode && provinceNode.children ? provinceNode.children : [];
 
         if (!children.length) {
           this.applyRegionSelection();
@@ -4080,7 +4080,7 @@
         if (children.length === 1 && children[0].text === '市辖区') {
           this.regionTemp.city = '市辖区';
           this.regionStep = 'district';
-          var self = this;
+          const self = this;
           this.$nextTick(function () {
             self.handleRegionListScroll('district');
           });
@@ -4088,7 +4088,7 @@
         }
 
         this.regionStep = 'city';
-        var self = this;
+        const self = this;
         this.$nextTick(function () {
           self.handleRegionListScroll('city');
         });
@@ -4098,11 +4098,11 @@
         this.regionTemp.city = name;
         this.regionTemp.district = '';
 
-        var cityNode = this.findCityNode(this.regionTemp.province, name);
-        var districtList = cityNode && cityNode.children ? cityNode.children : [];
+        const cityNode = this.findCityNode(this.regionTemp.province, name);
+        const districtList = cityNode && cityNode.children ? cityNode.children : [];
         if (districtList.length) {
           this.regionStep = 'district';
-          var self = this;
+          const self = this;
           this.$nextTick(function () {
             self.handleRegionListScroll('district');
           });
@@ -4141,7 +4141,7 @@
       },
 
       composeRegionFullAddress: function () {
-        var region = this.getRegionParts(this.regionForm.province, this.regionForm.city, this.regionForm.district).join('');
+        const region = this.getRegionParts(this.regionForm.province, this.regionForm.city, this.regionForm.district).join('');
         return (region || '') + (this.regionForm.detailAddress || '');
       },
 
@@ -4152,7 +4152,7 @@
             return;
           }
 
-          var text = await navigator.clipboard.readText();
+          const text = await navigator.clipboard.readText();
           if (!text) {
             this.showAlert('剪贴板为空');
             return;
@@ -4165,8 +4165,8 @@
       },
 
       parsePastedAddress: function () {
-        var self = this;
-        var text = (this.pasteText || '').trim();
+        const self = this;
+        const text = (this.pasteText || '').trim();
         this.initBaseServices();
         this.isParsingPaste = true;
 
@@ -4182,8 +4182,8 @@
           return;
         }
 
-        var cleaned = this.cleanAddressText(text);
-        var parsed = this.simpleParseAddress(cleaned);
+        const cleaned = this.cleanAddressText(text);
+        const parsed = this.simpleParseAddress(cleaned);
 
         if (this.isRegionOnlyPaste(cleaned, parsed)) {
           this.handleRegionOnlyPaste(cleaned, parsed);
@@ -4191,7 +4191,7 @@
         }
 
         if (!this.geocoder) {
-          var fallbackLocation = {
+          const fallbackLocation = {
             point: null,
             title: parsed.name || parsed.detail || '已识别地址',
             name: parsed.name || parsed.detail || '已识别地址',
@@ -4202,7 +4202,7 @@
             street: parsed.street || '',
             streetNumber: parsed.streetNumber || ''
           };
-          var fallbackCandidate = this.buildPasteSelectionCandidate(cleaned, parsed, fallbackLocation);
+          const fallbackCandidate = this.buildPasteSelectionCandidate(cleaned, parsed, fallbackLocation);
           this.validateAddressRisk(cleaned, parsed, fallbackLocation);
           this.isParsingPaste = false;
           this.openPasteConfirm(fallbackCandidate);
@@ -4210,7 +4210,7 @@
         }
 
         this.searchAddressByText(cleaned, function (result) {
-          var finalLocation;
+          let finalLocation;
           if (result) {
             finalLocation = {
               point: result.point,
@@ -4241,7 +4241,7 @@
             };
           }
 
-          var candidate = self.buildPasteSelectionCandidate(cleaned, parsed, finalLocation);
+          const candidate = self.buildPasteSelectionCandidate(cleaned, parsed, finalLocation);
           self.validateAddressRisk(cleaned, parsed, finalLocation);
           self.isParsingPaste = false;
           self.openPasteConfirm(candidate);
@@ -4251,26 +4251,26 @@
       isRegionOnlyPaste: function (cleaned, parsed) {
         if (!cleaned || !parsed) return false;
 
-        var hasRegionInfo = !!(parsed.province || parsed.city || parsed.district);
+        const hasRegionInfo = !!(parsed.province || parsed.city || parsed.district);
         if (!hasRegionInfo) return false;
 
-        var hasDetailInfo = !!(parsed.street || parsed.streetNumber || this.extractDoorNumber(parsed));
+        const hasDetailInfo = !!(parsed.street || parsed.streetNumber || this.extractDoorNumber(parsed));
         if (hasDetailInfo) return false;
 
-        var normalizedText = String(cleaned).replace(/\s+/g, '');
-        var normalizedRegion = [
+        const normalizedText = String(cleaned).replace(/\s+/g, '');
+        const normalizedRegion = [
           parsed.province || '',
           parsed.city || '',
           parsed.district || ''
         ].join('').replace(/\s+/g, '');
 
-        return !!normalizedRegion && normalizedText === normalizedRegion;
+        return normalizedText === normalizedRegion;
       },
 
       handleRegionOnlyPaste: function (cleaned, parsed) {
-        var self = this;
+        const self = this;
 
-        var applyRegion = function (province, city, district, riskLocation) {
+        const applyRegion = function (province, city, district, riskLocation) {
           self.selectedLocation = {
             point: null,
             title: '',
@@ -4309,14 +4309,14 @@
           self.isParsingPaste = false;
         };
 
-        var fallbackProvince = this.currentLocation && this.currentLocation.province ? this.currentLocation.province : '';
-        var fallbackCity = this.currentLocation && this.currentLocation.city ? this.currentLocation.city : '';
-        var fallbackDistrict = this.currentLocation && this.currentLocation.district ? this.currentLocation.district : '';
+        const fallbackProvince = this.currentLocation && this.currentLocation.province ? this.currentLocation.province : '';
+        const fallbackCity = this.currentLocation && this.currentLocation.city ? this.currentLocation.city : '';
+        const fallbackDistrict = this.currentLocation && this.currentLocation.district ? this.currentLocation.district : '';
 
         this.searchAddressByText(cleaned, function (result) {
-          var province = (result && result.province) || parsed.province || fallbackProvince || '';
-          var city = (result && result.city) || parsed.city || fallbackCity || '';
-          var district = parsed.district || '';
+          const province = (result && result.province) || parsed.province || fallbackProvince || '';
+          const city = (result && result.city) || parsed.city || fallbackCity || '';
+          let district = parsed.district || '';
 
           if (!district) {
             if (parsed.province && parsed.city) {
@@ -4328,7 +4328,7 @@
             district = result.district;
           }
 
-          var finalRegionLocation = {
+          const finalRegionLocation = {
             province: province,
             city: city,
             district: district
@@ -4339,8 +4339,8 @@
       },
 
       buildSearchDisplayTitle: function (parsed, result) {
-        var parsedName = parsed && parsed.name ? parsed.name : '';
-        var resultTitle = result && result.title ? result.title : '';
+        const parsedName = parsed && parsed.name ? parsed.name : '';
+        const resultTitle = result && result.title ? result.title : '';
 
         if (parsedName && parsedName.length >= resultTitle.length) {
           return parsedName;
@@ -4350,11 +4350,11 @@
       },
 
       buildPasteSelectionCandidate: function (cleaned, parsed, finalLocation) {
-        var province = finalLocation && finalLocation.province ? finalLocation.province : parsed.province || '';
-        var city = finalLocation && finalLocation.city ? finalLocation.city : parsed.city || '';
-        var district = finalLocation && finalLocation.district ? finalLocation.district : parsed.district || '';
-        var regionText = this.getRegionParts(province, city, district).join(' ');
-        var detailAddress = this.getPasteConfirmDetailAddress(cleaned, parsed, finalLocation);
+        const province = finalLocation && finalLocation.province ? finalLocation.province : parsed.province || '';
+        const city = finalLocation && finalLocation.city ? finalLocation.city : parsed.city || '';
+        const district = finalLocation && finalLocation.district ? finalLocation.district : parsed.district || '';
+        const regionText = this.getRegionParts(province, city, district).join(' ');
+        const detailAddress = this.getPasteConfirmDetailAddress(cleaned, parsed, finalLocation);
 
         return {
           activeTab: this.activeTab,
@@ -4368,10 +4368,10 @@
       },
 
       getPasteConfirmDetailAddress: function (cleaned, parsed, finalLocation) {
-        var title = finalLocation && (finalLocation.title || finalLocation.name) ? (finalLocation.title || finalLocation.name) : '';
-        var fallback = this.extractDetailAddress(cleaned, parsed, finalLocation);
+        const title = finalLocation && (finalLocation.title || finalLocation.name) ? (finalLocation.title || finalLocation.name) : '';
+        const fallback = this.extractDetailAddress(cleaned, parsed, finalLocation);
 
-        if (title) {
+        if (title && title.length > 2) {
           return title;
         }
 
@@ -4379,11 +4379,11 @@
       },
 
       extractDetailAddress: function (cleaned, parsed, finalLocation) {
-        var detailAddress = parsed && parsed.detail ? parsed.detail : '';
-        var address = finalLocation && finalLocation.address ? finalLocation.address : cleaned;
-        var province = finalLocation && finalLocation.province ? finalLocation.province : '';
-        var city = finalLocation && finalLocation.city ? finalLocation.city : '';
-        var district = finalLocation && finalLocation.district ? finalLocation.district : '';
+        let detailAddress = parsed && parsed.detail ? parsed.detail : '';
+        const address = finalLocation && finalLocation.address ? finalLocation.address : cleaned;
+        const province = finalLocation && finalLocation.province ? finalLocation.province : '';
+        const city = finalLocation && finalLocation.city ? finalLocation.city : '';
+        const district = finalLocation && finalLocation.district ? finalLocation.district : '';
 
         if (!detailAddress) {
           detailAddress = address || '';
@@ -4410,9 +4410,13 @@
           return parsed.streetNumber;
         }
 
-        var detail = parsed.detail || '';
-        var tailNumberMatch = detail.match(/(\d{2,}[A-Za-z]?|\d+[甲乙丙丁])$/);
-        return tailNumberMatch ? tailNumberMatch[0] : '';
+        const detail = parsed.detail || '';
+        const tailNumberMatch = detail.match(/(\d{2,}[A-Za-z]?|\d+[甲乙丙丁])$/);
+        if (tailNumberMatch) {
+          return tailNumberMatch[0];
+        }
+
+        return '';
       },
 
       openPasteConfirm: function (candidate) {
@@ -4434,7 +4438,7 @@
       },
 
       confirmPasteSelection: function () {
-        var candidate = this.pendingPasteSelection;
+        const candidate = this.pendingPasteSelection;
 
         if (!candidate) {
           this.showPasteConfirm = false;
@@ -4474,7 +4478,7 @@
       // 返回清洗后的干净地址文本
       // ================================================
       cleanAddressText: function (text) {
-        var t = text || '';
+        let t = text || '';
         t = t.replace(/收货地址[:：]?\s*/g, '');
         t = t.replace(/详细地址[:：]?\s*/g, '');
         t = t.replace(/地址[:：]?\s*/g, '');
@@ -4504,7 +4508,7 @@
       // - name: 地址名称（取详细地址的前20个字符）
       // ================================================
       simpleParseAddress: function (text) {
-        var result = {
+        const result = {
           province: '',
           city: '',
           district: '',
@@ -4514,34 +4518,34 @@
           name: ''
         };
 
-        var source = text || '';
-        var remain = source;
+        const source = text || '';
+        let remain = source;
 
-        var provinceMatch = source.match(/(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区|内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区|[^省]+省)/);
+        const provinceMatch = source.match(/(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区|内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区|[^省]+省)/);
         if (provinceMatch) {
           result.province = this.formatProvinceName(provinceMatch[0]);
           remain = remain.replace(provinceMatch[0], '');
         }
 
-        var cityMatch = remain.match(/([^市]+市|[^州]+州|[^地区]+地区|[^盟]+盟)/);
+        const cityMatch = remain.match(/([^市]+市|[^州]+州|[^地区]+地区|[^盟]+盟)/);
         if (cityMatch) result.city = cityMatch[0];
 
         if (result.city) {
           remain = remain.replace(result.city, '');
         }
 
-        var districtMatch = remain.match(/([^区]+区|[^县]+县|[^旗]+旗)/);
+        const districtMatch = remain.match(/([^区]+区|[^县]+县|[^旗]+旗)/);
         if (districtMatch) result.district = districtMatch[0];
 
         if (result.district) remain = remain.replace(result.district, '');
 
-        var houseMatch = remain.match(/([A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+)$/);
+        const houseMatch = remain.match(/([A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+)$/);
         result.detail = houseMatch ? houseMatch[0] : remain.trim();
 
-        var streetMatch = source.match(/([^省市区县]+(?:路|街|道|巷))/);
+        const streetMatch = source.match(/([^省市区县]+(?:路|街|道|巷))/);
         if (streetMatch) result.street = streetMatch[0];
 
-        var streetNumberMatch = source.match(/(\d+号|\d+弄|\d+栋|\d+幢|\d+单元|\d+室|[A-Za-z0-9\-]+室|\b\d{2,}\b)$/);
+        const streetNumberMatch = source.match(/(\d+号|\d+弄|\d+栋|\d+幢|\d+单元|\d+室|[A-Za-z0-9\-]+室|\b\d{2,}\b)$/);
         if (streetNumberMatch) result.streetNumber = streetNumberMatch[0];
 
         result.name = remain.trim().slice(0, 20);
@@ -4550,16 +4554,16 @@
       },
 
       searchAddressByText: function (keyword, callback) {
-        var self = this;
+        const self = this;
 
         if (!keyword) {
           callback(null);
           return;
         }
 
-        var mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
+        const mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
 
-        var localSearch = new BMapGL.LocalSearch(mapContext, {
+        const localSearch = new BMapGL.LocalSearch(mapContext, {
           pageCapacity: 1,
           onSearchComplete: function (results) {
             if (!results || localSearch.getStatus() !== 0 || results.getCurrentNumPois() === 0) {
@@ -4567,7 +4571,7 @@
               return;
             }
 
-            var poi = results.getPoi(0);
+            const poi = results.getPoi(0);
             if (!poi || !poi.point) {
               callback(null);
               return;
@@ -4586,7 +4590,7 @@
             }
 
             self.geocoder.getLocation(poi.point, function (rs) {
-              var ac = rs && rs.addressComponents ? rs.addressComponents : {};
+              const ac = rs && rs.addressComponents ? rs.addressComponents : {};
               callback({
                 point: poi.point,
                 title: poi.title || '',
@@ -4615,15 +4619,15 @@
       // 检测到的风险会存储到 addressRiskList 中
       // ================================================
       validateAddressRisk: function (rawText, parsedInput, finalLocation) {
-        var risks = [];
+        let risks = [];
 
-        var inputProvince = parsedInput && parsedInput.province ? parsedInput.province : '';
-        var inputCity = parsedInput && parsedInput.city ? parsedInput.city : '';
-        var inputDistrict = parsedInput && parsedInput.district ? parsedInput.district : '';
+        const inputProvince = parsedInput && parsedInput.province ? parsedInput.province : '';
+        const inputCity = parsedInput && parsedInput.city ? parsedInput.city : '';
+        const inputDistrict = parsedInput && parsedInput.district ? parsedInput.district : '';
 
-        var finalProvince = finalLocation && finalLocation.province ? this.formatProvinceName(finalLocation.province) : '';
-        var finalCity = finalLocation && finalLocation.city ? finalLocation.city : '';
-        var finalDistrict = finalLocation && finalLocation.district ? finalLocation.district : '';
+        const finalProvince = finalLocation && finalLocation.province ? this.formatProvinceName(finalLocation.province) : '';
+        const finalCity = finalLocation && finalLocation.city ? finalLocation.city : '';
+        const finalDistrict = finalLocation && finalLocation.district ? finalLocation.district : '';
 
         if (!inputProvince || !inputCity || !inputDistrict) {
           risks.push('输入地址中的省、市、区信息可能不完整');
@@ -4740,7 +4744,7 @@
       // 用户确认后，调用 savePayload 保存地址数据
       // ================================================
       confirmSheetAddress: function () {
-        var payload;
+        let payload;
 
         if (this.activeTab === 'map') {
           if (!this.selectedLocation.address && !this.sheetAddressText) {
@@ -4779,7 +4783,7 @@
         this.riskConfirmed = true;
         this.showRiskConfirm = false;
 
-        var payload = this.pendingPayload || (this.activeTab === 'map' ? this.buildMapPayload() : this.buildRegionPayload());
+        const payload = this.pendingPayload || (this.activeTab === 'map' ? this.buildMapPayload() : this.buildRegionPayload());
         payload.riskConfirmed = true;
         payload.hasRisk = this.addressRiskList.length > 0;
         payload.riskMessages = this.addressRiskList.slice();
@@ -4817,21 +4821,21 @@
   // 如果是中文，使用折半查找法确定拼音首字母区间
   // ================================================
   function getLetter(name) {
-    var value = String(name || '').trim();
+    let value = String(name || '').trim();
     if (!value) return '';
 
-    var first = value.charAt(0);
+    const first = value.charAt(0);
 
     if (/^[A-Za-z]$/.test(first)) {
       return first.toUpperCase();
     }
 
-    var initials = 'ABCDEFGHJKLMNOPQRSTWXYZ';
-    var boundaryChars = '阿芭擦搭蛾发噶哈机喀垃妈拿哦啪期然撒塌挖昔压匝';
+    const initials = 'ABCDEFGHJKLMNOPQRSTWXYZ';
+    const boundaryChars = '阿芭擦搭蛾发噶哈机喀垃妈拿哦啪期然撒塌挖昔压匝';
 
-    for (var i = 0; i < boundaryChars.length; i++) {
-      var current = boundaryChars.charAt(i);
-      var next = boundaryChars.charAt(i + 1);
+    for (let i = 0; i < boundaryChars.length; i++) {
+      const current = boundaryChars.charAt(i);
+      const next = boundaryChars.charAt(i + 1);
 
       if (first.localeCompare(current, 'zh-CN') >= 0 && (!next || first.localeCompare(next, 'zh-CN') < 0)) {
         return initials.charAt(i) || '';
