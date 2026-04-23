@@ -6,6 +6,12 @@
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
   />
+  <!-- 
+    页面标题：常住地址选择
+    这是一个用于选择用户常住地址的页面组件
+    包含两种地址选择方式：地图选址和地区选址
+    支持自动定位、地址粘贴识别、地址风险检测等功能
+  -->
   <title>常住地址选择</title>
   <style>
     * {
@@ -2348,6 +2354,14 @@
   </transition>
 </div>
 
+<!-- 
+  ================================================
+  第三方库引入说明
+  ================================================
+  1. Vue 2.x - 渐进式JavaScript框架，用于构建用户界面
+  2. allianity-city-data.js - 城市行政区划数据，包含省市区三级联动数据
+  3. 百度地图GL版 API - 用于地图展示、定位、搜索等功能
+-->
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
 <script src="./allianity-city-data.js"></script>
 <script src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=HgjE1KgxQkaoM0G66LUd1kQ1TpPBpQg5"></script>
@@ -2356,8 +2370,23 @@
     el: '#app',
     data: function () {
       return {
+        // ================================================
+        // 当前激活的标签页：'map' 表示地图选址，'region' 表示地区选址
+        // ================================================
         activeTab: 'map',
 
+        // ================================================
+        // 弹层/页面显示状态控制
+        // showAddressSheet - 地址选择弹层（从底部弹出的地址选择面板）
+        // showLocationPicker - 地图选址全屏页（用于在地图上精确定位）
+        // showSearchPage - 搜索地址页面（用于搜索具体地址）
+        // showCityPickerPage - 城市选择器页面（用于切换地图定位的城市）
+        // showRiskConfirm - 地址风险确认弹层（当检测到地址异常时显示）
+        // showPasteConfirm - 粘贴地址确认弹层（粘贴地址识别后确认）
+        // showVantAlert - 通用提示弹层（用于显示警告或提示信息）
+        // showRegionSelector - 地区选择器弹层（省市区三级联动选择）
+        // showPasteBoard - 粘贴板展开状态（控制地址粘贴输入框的显示/隐藏）
+        // ================================================
         showAddressSheet: false,
         showLocationPicker: false,
         showSearchPage: false,
@@ -2366,19 +2395,45 @@
         showPasteConfirm: false,
         showVantAlert: false,
         showRegionSelector: false,
-        showPasteBoard: false, // 粘贴板展开状态，默认关闭
+        showPasteBoard: false,
         isParsingPaste: false,
 
-        sheetProviceCityDistrict: '', // 地图选址页显示的省市区文本
+        // 地图选址页显示的省市区文本（用于在地址选择面板中显示已选择的区域）
+        sheetProviceCityDistrict: '',
 
+        // ================================================
+        // 百度地图API对象
+        // geolocation - 定位服务，用于获取用户当前经纬度坐标
+        // geocoder - 地理编码服务，用于将经纬度转换为详细地址
+        // ================================================
         geolocation: null,
         geocoder: null,
 
+        // ================================================
+        // 地图选址页面相关对象
+        // pickerMapInstance - 地图实例，用于在地图选址页面显示地图
+        // pickerGeocoder - 地图页面专用的地理编码器
+        // pickerSearchTimer - 地图页面搜索防抖定时器
+        // searchPageTimer - 搜索页面搜索防抖定时器
+        // ================================================
         pickerMapInstance: null,
         pickerGeocoder: null,
         pickerSearchTimer: null,
         searchPageTimer: null,
 
+        // ================================================
+        // 当前定位信息
+        // 当用户点击"使用"按钮时，会将这个对象的内容应用到选中的地址
+        // point - 经纬度坐标对象 {lng: 经度, lat: 纬度}
+        // title - 地点名称（如：百度大厦）
+        // name - 地点名称（同title）
+        // address - 详细地址（如：北京市海淀区上地十街10号）
+        // province - 省份（如：北京市）
+        // city - 城市（如：北京市）
+        // district - 区县（如：海淀区）
+        // street - 街道（如：上地十街）
+        // streetNumber - 门牌号（如：10号）
+        // ================================================
         currentLocation: {
           point: null,
           title: '',
@@ -2390,12 +2445,23 @@
           street: '',
           streetNumber: ''
         },
+
+        // ================================================
+        // 当前定位蓝点在地图上的样式位置
+        // 用于在地图选址页面中显示用户当前的位置
+        // display: 'none' 表示不显示，'block' 表示显示
+        // left/top - 蓝点在地图上的像素位置
+        // ================================================
         currentLocationMarkerStyle: {
           display: 'none',
           left: '50%',
           top: '50%'
         },
 
+        // ================================================
+        // 用户最终选择的地址信息
+        // 这个对象存储用户确认选择的地址，用于提交和展示
+        // ================================================
         selectedLocation: {
           point: null,
           title: '',
@@ -2408,12 +2474,29 @@
           streetNumber: ''
         },
 
+        // ================================================
+        // 地图选址模式下的临时数据
+        // sheetAddressTitle - 地图上选择的地点名称
+        // sheetAddressText - 地图上选择的详细地址文本
+        // sheetDoorNumber - 用户输入的门牌号（如：6栋201室）
+        // ================================================
         sheetAddressTitle: '',
         sheetAddressText: '',
         sheetDoorNumber: '',
 
+        // 用户粘贴的地址文本（用于地址粘贴识别功能）
         pasteText: '',
 
+        // ================================================
+        // 地图选址页面搜索相关
+        // pickerKeyword - 搜索框关键词
+        // pickerCityText - 当前地图所在城市名称
+        // cityPickerKeyword - 城市选择器搜索关键词
+        // cityPickerIndexActive - 城市选择器当前高亮的字母索引
+        // cityPickerToastLetter - 城市选择器右侧字母索引触摸时显示的提示字母
+        // cityPickerToastTimer - 城市选择器字母提示的隐藏定时器
+        // nearbyList - 地图中心点附近的POI（兴趣点）列表
+        // ================================================
         pickerKeyword: '',
         pickerCityText: '',
         cityPickerKeyword: '',
@@ -2422,24 +2505,55 @@
         cityPickerToastTimer: null,
         nearbyList: [],
 
+        // ================================================
+        // 搜索结果页面相关
+        // searchPageKeyword - 搜索页面输入的关键词
+        // searchResultList - 搜索结果列表
+        // ================================================
         searchPageKeyword: '',
         searchResultList: [],
 
+        // ================================================
+        // 地址风险检测相关
+        // addressRiskList - 检测到的地址异常列表
+        // addressRiskText - 地址异常的文本描述（多个异常用分号连接）
+        // riskConfirmed - 用户是否已确认继续使用有风险的地址
+        // ================================================
         addressRiskList: [],
         addressRiskText: '',
         riskConfirmed: false,
 
+        // ================================================
+        // 待处理的数据（用于在确认操作前暂存数据）
+        // pendingPayload - 待确认的地址数据（风险确认时使用）
+        // pendingPasteSelection - 待确认的粘贴地址识别结果
+        // pasteConfirmData - 粘贴确认弹层显示的数据
+        // ================================================
         pendingPayload: null,
         pendingPasteSelection: null,
         pasteConfirmData: {
           regionText: '',
           detailAddress: ''
         },
+
+        // ================================================
+        // 通用提示弹层的数据
+        // title - 弹层标题
+        // message - 弹层消息内容
+        // ================================================
         vantAlert: {
           title: '温馨提示',
           message: ''
         },
 
+        // ================================================
+        // 地区选址模式下的表单数据
+        // regionDisplayText - 用于显示的省市区文本（如："北京市 北京市 朝阳区"）
+        // province - 省份
+        // city - 城市
+        // district - 区县
+        // detailAddress - 详细地址（小区名、门牌号等）
+        // ================================================
         regionDisplayText: '',
         regionForm: {
           province: '',
@@ -2447,9 +2561,21 @@
           district: '',
           detailAddress: ''
         },
+
+        // ================================================
+        // 地区选址模式下详细地址的搜索建议列表
+        // regionSuggestTimer - 搜索建议的防抖定时器
+        // ================================================
         regionSuggestList: [],
         regionSuggestTimer: null,
 
+        // ================================================
+        // 地区选择器的状态
+        // regionSelectorTab - 当前标签：'domestic'（中国境内）或 'oversea'（港澳台及海外）
+        // regionStep - 当前选择步骤：'province'（选省份）、'city'（选城市）、'district'（选区县）
+        // regionTemp - 临时存储用户选择的省市区（未确认前）
+        // regionIndexActive - 各列表当前高亮的字母索引（用于右侧字母导航）
+        // ================================================
         regionSelectorTab: 'domestic',
         regionStep: 'province',
         regionTemp: {
@@ -2464,6 +2590,19 @@
           overseaProvince: ''
         },
 
+        // ================================================
+        // 最终提交的表单数据
+        // 这个对象会在用户点击确认后被填充并提交
+        // province - 省份
+        // city - 城市
+        // district - 区县
+        // street - 街道
+        // streetNumber - 门牌号
+        // fullAddress - 完整地址字符串
+        // detailAddress - 详细补充地址
+        // lng - 经度
+        // lat - 纬度
+        // ================================================
         form: {
           province: '',
           city: '',
@@ -2479,28 +2618,60 @@
     },
 
     computed: {
+      // ================================================
+      // 计算属性 - 根据已有数据计算得出的值
+      // 计算属性具有缓存特性，当依赖的数据变化时才会重新计算
+      // ================================================
+
+      // ================================================
+      // 获取城市数据源
+      // 从全局变量 cityData3 获取城市行政区划数据
+      // cityData3 是从 allianity-city-data.js 文件引入的省市区三级联动数据
+      // ================================================
       regionDataSource: function () {
         if (typeof cityData3 !== 'undefined' && Array.isArray(cityData3)) {
           return cityData3;
         }
         return [];
       },
+
+      // ================================================
+      // 国内省份列表（排除港澳台）
+      // 港澳台地区的value编码分别是 71（台湾）、81（香港）、82（澳门）
+      // filter 方法过滤掉这些地区，只保留中国大陆的省份数据
+      // ================================================
       domesticRegionTree: function () {
         return this.regionDataSource.filter(function (item) {
           return ['71', '81', '82'].indexOf(String(item.value)) === -1;
         });
       },
+
+      // ================================================
+      // 港澳台及海外地区列表
+      // 只保留value为 71、81、82 的地区
+      // ================================================
       overseaRegionTree: function () {
         return this.regionDataSource.filter(function (item) {
           return ['71', '81', '82'].indexOf(String(item.value)) > -1;
         });
       },
+
+      // ================================================
+      // 港澳台及海外地区的名称列表
+      // 将树形数据转换为简单的名称数组
+      // ================================================
       overseaRegionList: function () {
         return this.overseaRegionTree
           .map(function (item) {
             return item.text;
           });
       },
+
+      // ================================================
+      // 热门城市列表
+      // 定义了一些常用城市作为快捷选择项
+      // 会根据 cityData3 中的实际数据找到对应的完整省市区信息
+      // ================================================
       hotRegionList: function () {
         var self = this;
         var hotConfig = [
@@ -2520,6 +2691,12 @@
           return self.findHotCitySelection(item);
         }).filter(Boolean);
       },
+
+      // ================================================
+      // 按字母分组后的省份列表
+      // 每个省份包含 name（名称）和 letter（拼音首字母）
+      // 返回格式：[{letter: 'A', list: [{name: '安徽省', letter: 'A'}, ...]}, ...]
+      // ================================================
       groupedProvinceList: function () {
         var list = (this.domesticRegionTree || []).map(function (item) {
           return {
@@ -2529,11 +2706,20 @@
         });
         return this.groupByLetter(list.sort(sortByLetterAndName));
       },
+
+      // ================================================
+      // 省份列表中的所有字母索引
+      // 用于显示在列表右侧的字母导航栏
+      // ================================================
       provinceLetterList: function () {
         return this.groupedProvinceList.map(function (item) {
           return item.letter;
         });
       },
+
+      // ================================================
+      // 按字母分组后的港澳台及海外省份列表
+      // ================================================
       groupedOverseaProvinceList: function () {
         var list = (this.overseaRegionTree || []).map(function (item) {
           return {
@@ -2543,17 +2729,36 @@
         });
         return this.groupByLetter(list.sort(sortByLetterAndName));
       },
+
+      // ================================================
+      // 港澳台及海外省份列表的字母索引
+      // ================================================
       overseaProvinceLetterList: function () {
         return this.groupedOverseaProvinceList.map(function (item) {
           return item.letter;
         });
       },
+
+      // ================================================
+      // 当前选择的地区树（国内或海外）
+      // 根据 regionSelectorTab 决定使用哪个数据源
+      // ================================================
       currentRegionTree: function () {
         return this.regionSelectorTab === 'oversea' ? this.overseaRegionTree : this.domesticRegionTree;
       },
+
+      // ================================================
+      // 当前选择的省份节点
+      // 用于查找该省份下的城市列表
+      // ================================================
       currentProvinceNode: function () {
         return this.findProvinceNode(this.regionTemp.province);
       },
+
+      // ================================================
+      // 当前省份下的城市列表
+      // 如果是直辖市（市辖区），则显示省份本身作为城市
+      // ================================================
       currentCityList: function () {
         var provinceNode = this.currentProvinceNode;
         if (!provinceNode) return [];
@@ -2574,14 +2779,27 @@
         });
         return list.sort(sortByLetterAndName);
       },
+
+      // ================================================
+      // 按字母分组后的城市列表
+      // ================================================
       groupedCityList: function () {
         return this.groupByLetter(this.currentCityList);
       },
+
+      // ================================================
+      // 城市列表的字母索引
+      // ================================================
       cityLetterList: function () {
         return this.groupedCityList.map(function (item) {
           return item.letter;
         });
       },
+
+      // ================================================
+      // 当前城市下的区县列表
+      // 根据已选的省份和城市查找对应的区县数据
+      // ================================================
       currentDistrictList: function () {
         var cityNode = this.findCityNode(this.regionTemp.province, this.regionTemp.city);
         if (!cityNode) return [];
@@ -2594,14 +2812,29 @@
         });
         return list.sort(sortByLetterAndName);
       },
+
+      // ================================================
+      // 按字母分组后的区县列表
+      // ================================================
       groupedDistrictList: function () {
         return this.groupByLetter(this.currentDistrictList);
       },
+
+      // ================================================
+      // 区县列表的字母索引
+      // ================================================
       districtLetterList: function () {
         return this.groupedDistrictList.map(function (item) {
           return item.letter;
         });
       },
+
+      // ================================================
+      // 地区选择器的面包屑导航数据
+      // 用于显示已选择的省市区路径
+      // 例如：如果选了"北京市 - 北京市 - 朝阳区"
+      // 则返回 [{step: 'province', label: '北京市'}, {step: 'city', label: '北京市'}, {step: 'district', label: '朝阳区'}]
+      // ================================================
       regionSelectorCrumbs: function () {
         var list = [];
         if (this.regionTemp.province) {
@@ -2624,9 +2857,21 @@
         }
         return list;
       },
+
+      // ================================================
+      // 城市选择器当前城市的显示名称
+      // 用于在城市选择器中显示当前定位的城市
+      // 会去除"市"、"自治区"等后缀，使其更简洁
+      // ================================================
       currentCityDisplayName: function () {
         return this.normalizeCityPickerName(this.currentLocation.city || this.pickerCityText || '');
       },
+
+      // ================================================
+      // 城市选择器的原始城市列表
+      // 从城市数据源中提取所有城市名称
+      // 排除"市辖区"这类特殊名称
+      // ================================================
       cityPickerSourceList: function () {
         var result = [];
         var walk = function (list) {
@@ -2647,6 +2892,12 @@
         walk(this.regionDataSource || []);
         return result.sort(sortByLetterAndName);
       },
+
+      // ================================================
+      // 城市选择器的过滤后列表
+      // 根据用户输入的关键词过滤城市列表
+      // 如果关键词为空，则返回所有城市
+      // ================================================
       cityPickerFilteredList: function () {
         var keyword = (this.cityPickerKeyword || '').trim();
         if (!keyword) return this.cityPickerSourceList;
@@ -2655,20 +2906,43 @@
           return item.name && item.name.indexOf(keyword) > -1;
         });
       },
+
+      // ================================================
+      // 按字母分组后的城市选择器列表
+      // ================================================
       cityPickerGroupedList: function () {
         return this.groupByLetter(this.cityPickerFilteredList);
       },
+
+      // ================================================
+      // 城市选择器列表的字母索引
+      // ================================================
       cityPickerLetterList: function () {
         return this.cityPickerGroupedList.map(function (item) {
           return item.letter;
         });
       },
+
+      // ================================================
+      // 是否显示地区详细地址的搜索建议面板
+      // 条件：地区选址模式 且 有搜索结果 且 详细地址输入框有内容
+      // ================================================
       showRegionSuggest: function () {
         return this.activeTab === 'region' && this.regionSuggestList.length > 0 && !!this.regionForm.detailAddress;
       }
     },
 
     methods: {
+      // ================================================
+      // 方法集合 - 处理各种业务逻辑
+      // ================================================
+
+      // ================================================
+      // 将列表按字母分组
+      // 输入：[{name: '安徽省', letter: 'A'}, {name: '北京市', letter: 'B'}, ...]
+      // 输出：[{letter: 'A', list: [...]}, {letter: 'B', list: [...]}, ...]
+      // 用于实现省份/城市/区县列表按拼音首字母分组显示
+      // ================================================
       groupByLetter: function (list) {
         var map = {};
         (list || []).forEach(function (item) {
@@ -2687,6 +2961,11 @@
         });
       },
 
+      // ================================================
+      // 获取地区列表容器的引用名称
+      // type - 列表类型：'province'（省份）、'city'（城市）、'district'（区县）、'overseaProvince'（海外省份）
+      // 用于在滚动时获取对应的DOM元素
+      // ================================================
       getRegionListWrapRef: function (type) {
         var refMap = {
           province: 'provinceListWrap',
@@ -2697,6 +2976,12 @@
         return refMap[type] || '';
       },
 
+      // ================================================
+      // 滚动到指定字母的位置
+      // 当用户点击右侧字母导航时调用
+      // type - 列表类型
+      // letter - 要滚动到的目标字母
+      // ================================================
       scrollToRegionLetter: function (type, letter) {
         var refName = this.getRegionListWrapRef(type);
         var wrap = refName ? this.$refs[refName] : null;
@@ -2733,6 +3018,11 @@
         this.regionIndexActive[type] = activeLetter;
       },
 
+      // ================================================
+      // 显示通用提示弹层
+      // message - 提示消息内容
+      // title - 弹层标题（可选，默认为"温馨提示"）
+      // ================================================
       showAlert: function (message, title) {
         this.vantAlert = {
           title: title || '温馨提示',
@@ -2745,6 +3035,11 @@
         this.showVantAlert = false;
       },
 
+      // ================================================
+      // 标准化城市选择器中的城市名称
+      // 去除"特别行政区"、"自治州"、"地区"、"盟"、"市"等后缀
+      // 使城市名称更简洁（如："北京市" -> "北京"）
+      // ================================================
       normalizeCityPickerName: function (name) {
         var value = (name || '').trim();
         if (!value) return '';
@@ -2756,10 +3051,18 @@
           .replace(/市$/, '');
       },
 
+      // ================================================
+      // 切换地址粘贴板的展开/收起状态
+      // ================================================
       togglePasteBoard: function () {
         this.showPasteBoard = !this.showPasteBoard;
       },
 
+      // ================================================
+      // 切换地址选择的主标签页
+      // tab - 要切换到的标签：'map'（地图选址）或 'region'（地区选址）
+      // 切换时会清除之前的地址风险提示
+      // ================================================
       switchMainTab: function (tab) {
         this.activeTab = tab;
         this.addressRiskList = [];
@@ -2769,6 +3072,10 @@
         }
       },
 
+      // ================================================
+      // 清除粘贴文本内容
+      // 包括：粘贴文本、地址风险列表、待确认的粘贴选择数据
+      // ================================================
       clearPasteText: function () {
         this.pasteText = '';
         this.addressRiskList = [];
@@ -2873,6 +3180,12 @@
         this.clearRegionSuggest();
       },
 
+      // ================================================
+      // 初始化百度地图基础服务
+      // 检查百度地图API是否加载成功
+      // 创建定位服务（geolocation）和地理编码器（geocoder）实例
+      // 这些服务会在整个应用中被复用
+      // ================================================
       initBaseServices: function () {
         if (typeof BMapGL === 'undefined') {
           this.showAlert('百度地图加载失败');
@@ -2886,6 +3199,11 @@
         }
       },
 
+      // ================================================
+      // 打开地址选择弹层
+      // 用户点击"选择常住地址"按钮时调用
+      // 会初始化地图服务并尝试获取用户当前位置
+      // ================================================
       openAddressSheet: function () {
         this.showAddressSheet = true;
         this.initBaseServices();
@@ -3068,6 +3386,12 @@
         }
       },
 
+      // ================================================
+      // 获取用户当前位置
+      // 使用百度地图的定位服务获取当前经纬度
+      // 成功后调用 reversePointToAddress 将坐标转换为详细地址
+      // 如果用户还没有选择过地址，会自动将定位结果设为选中地址
+      // ================================================
       fetchCurrentLocation: function () {
         var self = this;
         if (!this.geolocation) return;
@@ -3092,6 +3416,13 @@
         });
       },
 
+      // ================================================
+      // 将经纬度坐标转换为详细地址
+      // point - 经纬度坐标对象 {lng: 经度, lat: 纬度}
+      // callback - 转换完成后的回调函数，接收地址信息对象
+      // 地址信息包含：point(坐标)、title(名称)、name(名称)、address(完整地址)、
+      //             province(省份)、city(城市)、district(区县)、street(街道)、streetNumber(门牌号)
+      // ================================================
       reversePointToAddress: function (point, callback) {
         if (!this.geocoder || !point) return;
         var self = this;
@@ -3118,6 +3449,12 @@
         });
       },
 
+      // ================================================
+      // 使用当前定位的地址
+      // 当用户点击"使用"按钮，使用当前GPS定位获取的地址时调用
+      // 会将当前位置信息应用到地址选择表单
+      // 并清除之前的地址风险数据
+      // ================================================
       useCurrentLocation: function () {
         if (!this.currentLocation.point) {
           this.showAlert('当前位置还未获取成功');
@@ -3131,6 +3468,15 @@
         this.activeTab = 'map';
       },
 
+      // ================================================
+      // 将地图选择的地址应用到地址选择表单
+      // location - 包含地址信息的对象
+      // 这个方法会：
+      // 1. 更新 selectedLocation（用户最终选择的地址）
+      // 2. 更新 sheetAddressTitle（地图选址页显示的地点名称）
+      // 3. 更新 sheetAddressText（地图选址页显示的详细地址）
+      // 4. 更新 sheetProviceCityDistrict（地图选址页显示的省市区）
+      // ================================================
       applyMapLocationToSheet: function (location) {
         var province = location && location.province ? location.province : '';
         var city = location && location.city ? location.city : '';
@@ -3158,6 +3504,11 @@
         this.sheetProviceCityDistrict = [this.selectedLocation.province, city, district].filter(Boolean).join(' ');
       },
 
+      // ================================================
+      // 打开地图选址全屏页面
+      // 用户点击地图缩略图时调用
+      // 会初始化百度地图并显示在页面上
+      // ================================================
       openLocationPicker: function () {
         var self = this;
         this.showLocationPicker = true;
@@ -3172,6 +3523,12 @@
         this.showLocationPicker = false;
       },
 
+      // ================================================
+      // 初始化地图选址页面的地图
+      // 创建百度地图实例，设置中心点和缩放级别
+      // 添加地图移动和缩放事件监听，加载周边POI数据
+      // 如果已有选中的位置，会以该位置为中心显示地图
+      // ================================================
       initPickerMap: function () {
         var self = this;
         var mapEl = this.$refs.pickerMap;
@@ -3316,6 +3673,13 @@
         });
       },
 
+      // ================================================
+      // 计算两点之间的距离并返回友好文本
+      // p1 - 第一个点的经纬度坐标
+      // p2 - 第二个点的经纬度坐标
+      // 返回格式：小于1000米显示"xxxm"，大于等于1000米显示"x.xkm"
+      // 使用Haversine公式计算地球表面两点间的距离
+      // ================================================
       calcDistanceText: function (p1, p2) {
         try {
           var rad = function (d) {
@@ -3394,6 +3758,13 @@
         }, 300);
       },
 
+      // ================================================
+      // 搜索地址
+      // keyword - 搜索关键词（如：小区别名、写字楼名称等）
+      // callback - 搜索完成后的回调函数，接收搜索结果列表
+      // 使用百度地图的 LocalSearch 功能在当前地图范围内搜索
+      // 返回的列表包含每个POI的坐标、名称、地址、省市区等信息
+      // ================================================
       searchAddress: function (keyword, callback) {
         var self = this;
         if (!keyword || !this.pickerMapInstance) {
@@ -4095,6 +4466,13 @@
         };
       },
 
+      // ================================================
+      // 清洗粘贴的地址文本
+      // 去除常见的前缀文字（如：收货地址、详细地址、地址等）
+      // 去除收货人、联系人、手机号、电话等信息
+      // 去除换行符、制表符，将多个空格合并为一个
+      // 返回清洗后的干净地址文本
+      // ================================================
       cleanAddressText: function (text) {
         var t = text || '';
         t = t.replace(/收货地址[:：]?\s*/g, '');
@@ -4112,6 +4490,19 @@
         return t;
       },
 
+      // ================================================
+      // 简单解析地址文本
+      // 使用正则表达式从地址文本中提取省、市、区、街道、门牌号等信息
+      // text - 清洗后的地址文本
+      // 返回解析后的地址对象，包含：
+      // - province: 省份
+      // - city: 城市
+      // - district: 区县
+      // - street: 街道
+      // - streetNumber: 门牌号
+      // - detail: 详细地址（门牌号以后的部分）
+      // - name: 地址名称（取详细地址的前20个字符）
+      // ================================================
       simpleParseAddress: function (text) {
         var result = {
           province: '',
@@ -4213,6 +4604,16 @@
         localSearch.search(keyword);
       },
 
+      // ================================================
+      // 验证地址是否存在风险
+      // 检测以下几种异常情况：
+      // 1. 省、市、区信息不完整
+      // 2. 输入的省份与地图识别的省份不一致
+      // 3. 输入的城市与地图识别的城市不一致
+      // 4. 输入的区县与地图识别的区县不一致
+      // 5. 详细地址过短（少于2个字符）
+      // 检测到的风险会存储到 addressRiskList 中
+      // ================================================
       validateAddressRisk: function (rawText, parsedInput, finalLocation) {
         var risks = [];
 
@@ -4307,6 +4708,15 @@
         };
       },
 
+      // ================================================
+      // 保存地址数据并通知外部系统
+      // payload - 要保存的地址数据对象
+      // 这个方法会：
+      // 1. 将地址数据存储到浏览器的 localStorage（本地存储）
+      // 2. 通过 postMessage 向父窗口发送地址选择事件（用于iframe嵌入场景）
+      // 3. 关闭地址选择弹层
+      // 4. 在控制台打印地址数据（便于调试）
+      // ================================================
       savePayload: function (payload) {
         localStorage.setItem('customer_address_payload', JSON.stringify(payload));
 
@@ -4321,6 +4731,14 @@
         this.showAddressSheet = false;
       },
 
+      // ================================================
+      // 确认提交选中的地址
+      // 根据当前激活的标签页（地图选址/地区选址）构建地址数据
+      // 地图选址模式：必须已选择地址
+      // 地区选址模式：必须已选择省市区且填写了详细地址
+      // 如果检测到地址风险，会弹出风险确认对话框
+      // 用户确认后，调用 savePayload 保存地址数据
+      // ================================================
       confirmSheetAddress: function () {
         var payload;
 
@@ -4372,6 +4790,18 @@
     }
   });
 
+  // ================================================
+  // 辅助函数 - Vue实例外部定义
+  // 这些函数不依赖Vue实例，用于通用的数据处理
+  // ================================================
+
+  // ================================================
+  // 按拼音首字母和名称排序的比较函数
+  // 用于 Array.sort() 方法
+  // 首先按字母排序（A在前Z在后），字母相同则按中文名称的localeCompare排序
+  // a - 第一个要比较的对象 {name: 名称, letter: 字母}
+  // b - 第二个要比较的对象 {name: 名称, letter: 字母}
+  // ================================================
   function sortByLetterAndName(a, b) {
     if (a.letter === b.letter) {
       return a.name.localeCompare(b.name, 'zh-CN');
@@ -4379,6 +4809,13 @@
     return a.letter.localeCompare(b.letter);
   }
 
+  // ================================================
+  // 获取中文拼音首字母
+  // name - 中文字符串
+  // 返回：对应的大写英文字母（A-Z）
+  // 如果是英文字母，直接返回大写字母
+  // 如果是中文，使用折半查找法确定拼音首字母区间
+  // ================================================
   function getLetter(name) {
     var value = String(name || '').trim();
     if (!value) return '';
