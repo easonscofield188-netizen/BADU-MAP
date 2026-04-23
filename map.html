@@ -2267,11 +2267,6 @@
             </template>
 
             <template v-if="regionStep === 'district'">
-              <div class="region-selected-bar" v-if="false">
-                <div class="region-chip" @click="goBackToProvinceStep">{{ regionTemp.province }}</div>
-                <div class="region-chip" v-if="regionTemp.city && regionTemp.city !== '市辖区'" @click="goBackToCityStep">{{ regionTemp.city }}</div>
-              </div>
-
               <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
                 <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
               </div>
@@ -2429,12 +2424,10 @@
         // 地图选址页面相关对象
         // pickerMapInstance - 地图实例，用于在地图选址页面显示地图
         // pickerGeocoder - 地图页面专用的地理编码器
-        // pickerSearchTimer - 地图页面搜索防抖定时器
         // searchPageTimer - 搜索页面搜索防抖定时器
         // ================================================
         pickerMapInstance: null,
         pickerGeocoder: null,
-        pickerSearchTimer: null,
         searchPageTimer: null,
 
         // ================================================
@@ -4088,14 +4081,6 @@
         });
       },
 
-      goBackToProvinceStep: function () {
-        this.switchRegionStepView('province');
-      },
-
-      goBackToCityStep: function () {
-        this.switchRegionStepView('city');
-      },
-
       selectHotCity: function (item) {
         this.regionTemp.province = item.province;
         this.regionTemp.city = item.city;
@@ -4154,16 +4139,6 @@
         this.applyRegionSelection();
       },
 
-      selectOverseaRegion: function (name) {
-        this.regionForm.province = this.formatProvinceName(name);
-        this.regionForm.city = '';
-        this.regionForm.district = '';
-        this.regionDisplayText = this.getRegionParts(this.regionForm.province, '', '').join(' ');
-        this.clearRegionSuggest();
-        this.showRegionSelector = false;
-        this.activeTab = 'region';
-      },
-
       applyRegionSelection: function () {
         this.regionForm.province = this.formatProvinceName(this.regionTemp.province || '');
         this.regionForm.city = this.regionTemp.city || '';
@@ -4181,25 +4156,6 @@
       composeRegionFullAddress: function () {
         const region = this.getRegionParts(this.regionForm.province, this.regionForm.city, this.regionForm.district).join('');
         return (region || '') + (this.regionForm.detailAddress || '');
-      },
-
-      readClipboardText: async function () {
-        try {
-          if (!navigator.clipboard || !navigator.clipboard.readText) {
-            this.showAlert('当前环境不支持直接读取剪贴板，请手动粘贴');
-            return;
-          }
-
-          const text = await navigator.clipboard.readText();
-          if (!text) {
-            this.showAlert('剪贴板为空');
-            return;
-          }
-
-          this.pasteText = text;
-        } catch (e) {
-          this.showAlert('读取剪贴板失败，请手动粘贴');
-        }
       },
 
       parsePastedAddress: function () {
