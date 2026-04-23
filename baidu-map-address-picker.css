@@ -1,0 +1,1446 @@
+@charset "UTF-8";
+
+.baidu-map-address-picker {
+  position: relative;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  overflow: visible;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.baidu-map-address-picker *,
+.baidu-map-address-picker *::before,
+.baidu-map-address-picker *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.baidu-map-address-picker .btn-primary {
+      width: 100%;
+      height: 11.73vw;
+      border: none;
+      border-radius: 2.67vw;
+      background: linear-gradient(180deg, #ff6767 0%, #ff3b30 100%);
+      color: #fff;
+      font-size: 4.27vw;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 1000;
+    }
+
+    .baidu-map-address-picker .sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1001;
+      background: #f6f6f6;
+      border-radius: 4.27vw 4.27vw 0 0;
+      overflow: hidden;
+      padding-bottom: calc(3.2vw + env(safe-area-inset-bottom));
+      max-height: 90vh;
+      overscroll-behavior: contain;
+      height: 140vw;
+    }
+
+    .baidu-map-address-picker .sheet-header {
+      height: 12.8vw;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      position: relative;
+      padding: 0 4.27vw;
+      font-size: 4.53vw;
+      font-weight: bold;
+      color: #222;
+      border-bottom: 0.27vw solid #f2f2f2;
+    }
+
+    .baidu-map-address-picker .sheet-close {
+      position: absolute;
+      right: 3.73vw;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 6.93vw;
+      color: #c7c7c7;
+      line-height: 1;
+      
+      font-weight: 300;
+    }
+
+    .baidu-map-address-picker .tabs {
+      display: flex;
+      background: #f1f1f1;
+      border-radius: 3.73vw 3.73vw 0 0;
+      overflow: hidden;
+    }
+
+    .baidu-map-address-picker .tab {
+      flex: 1;
+      text-align: center;
+      padding: 2.93vw 1.07vw 2.67vw;
+      font-size: 4vw;
+      color: #666;
+      line-height: 1.35;
+      background: #f1f1f1;
+      font-weight: bold;
+
+    }
+
+    .baidu-map-address-picker .tab.active {
+      background: #fff;
+      color: #333;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .tab small {
+      display: block;
+      font-size: 2.93vw;
+      color: #999;
+      margin-top: 0.53vw;
+    }
+
+    .baidu-map-address-picker .sheet-card {
+      background: #fff;
+      border-radius: 0 0 4.27vw 4.27vw;
+      padding: 0 3.73vw 3.2vw;
+    }
+
+    .baidu-map-address-picker .line-row {
+      display: flex;
+      align-items: center;
+      padding: 3.73vw 0;
+      border-bottom: 0.27vw solid #f4f4f4;
+    }
+
+    .baidu-map-address-picker .align-items-start {
+      align-items: flex-start;
+    }
+
+    .baidu-map-address-picker .line-row:last-child {
+      border-bottom: none;
+    }
+
+    .baidu-map-address-picker .line-label {
+      width: 19.2vw;
+      flex-shrink: 0;
+      font-size: 4vw;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .line-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .baidu-map-address-picker .address-empty {
+      font-size: 15px;
+      color: #b9b9b9;
+      line-height: 1.4;
+    }
+
+    .baidu-map-address-picker .address-title {
+      font-size: 4vw;
+      color: #333;
+      line-height: 1.45;
+      word-break: break-all;
+      display: flex;
+      flex-flow: column;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .baidu-map-address-picker .address-title .province-group {
+      margin-top: 1.07vw;
+      font-size: 3.47vw;
+      color: #8d8d8d;
+    }
+
+    .baidu-map-address-picker .map-thumb {
+      width: 20.27vw;
+      height: 13.33vw;
+      flex-shrink: 0;
+      border-radius: 2.67vw;
+      background: #f7f7f7;
+      position: relative;
+      overflow: hidden;
+      
+      margin-left: 2.67vw;
+    }
+
+    .baidu-map-address-picker .map-thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        url("./index-location-icon.png") center center / 6.4vw 6.4vw no-repeat,
+        url("./map-icon.png") center center / cover no-repeat;
+    }
+
+    .baidu-map-address-picker .location-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      border-radius: 2.67vw;
+      padding: 2.67vw 3.2vw;
+    }
+
+    .baidu-map-address-picker .location-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .baidu-map-address-picker .location-name {
+      font-size: 4.53vw;
+      font-weight: blod;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .baidu-map-address-picker .location-address {
+      margin-top: 1.07vw;
+      font-size: 3.47vw;
+      color: #8d8d8d;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .baidu-map-address-picker .btn-use {
+      width: 14.93vw;
+      height: 8.53vw;
+      flex-shrink: 0;
+      border: 0.27vw solid #666;
+      border-radius: 2.13vw;
+      background: #fff;
+      color: #333;
+      font-size: 3.73vw;
+      
+      margin-left: 2.67vw;
+    }
+
+    .baidu-map-address-picker .door-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 4vw;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .region-row {
+      display: flex;
+      align-items: center;
+      min-height: 5.87vw;
+      color: #333;
+      font-size: 4vw;
+      
+    }
+
+    .baidu-map-address-picker .region-row.placeholder {
+      color: #b9b9b9;
+    }
+
+    .baidu-map-address-picker .region-arrow-right {
+      margin-left: auto;
+      width: 2.13vw;
+      height: 2.13vw;
+      border-top: 0.4vw solid #999;
+      border-right: 0.4vw solid #999;
+      transform: rotate(45deg);
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .region-detail-wrap {
+      display: flex;
+      align-items: center;
+      min-height: 5.87vw;
+      position: relative;
+    }
+
+    .baidu-map-address-picker .region-detail-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 4vw;
+      color: #333;
+      padding: 0;
+    }
+
+    .baidu-map-address-picker .region-detail-clear {
+      width: 5.87vw;
+      height: 5.87vw;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: #c8c9cc;
+      color: #fff;
+      font-size: 4.27vw;
+      line-height: 5.87vw;
+      text-align: center;
+      cursor: pointer;
+      margin-left: 2.67vw;
+    }
+
+    .baidu-map-address-picker .region-suggest-panel {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 3.73vw);
+      z-index: 6;
+      background: #fff;
+      border-radius: 4.27vw;
+      box-shadow: 0 2.13vw 6.4vw rgba(0, 0, 0, 0.12);
+      border: 0.27vw solid #f2f3f5;
+      overflow: hidden;
+      max-height: 74.67vw;
+      overflow-y: auto;
+    }
+
+    .baidu-map-address-picker .region-suggest-item {
+      padding: 4.27vw 4.8vw 3.73vw;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .region-suggest-item + .region-suggest-item {
+      border-top: 0.27vw solid #f5f5f5;
+    }
+
+    .baidu-map-address-picker .region-suggest-title {
+      font-size: 4.53vw;
+      line-height: 6.4vw;
+      color: #222;
+      font-weight: bold;
+      word-break: break-all;
+    }
+
+    .baidu-map-address-picker .region-suggest-address {
+      margin-top: 1.6vw;
+      font-size: 3.73vw;
+      line-height: 5.33vw;
+      color: #666;
+      word-break: break-all;
+    }
+
+    .baidu-map-address-picker input::placeholder {
+      color: #b9b9b9;
+    }
+
+
+    .baidu-map-address-picker .paste-wrap {
+      margin-top: 3.2vw;
+      overflow: hidden;
+    }
+
+    .baidu-map-address-picker .paste-panel {
+      background: #fff;
+      border-top: 0.27vw solid #f2f2f2;
+      padding-top: 3.2vw;
+    }
+
+    .baidu-map-address-picker .paste-collapse {
+      overflow: hidden;
+      transition: max-height 0.28s ease, opacity 0.22s ease;
+      max-height: 96vw;
+      opacity: 1;
+    }
+
+    .baidu-map-address-picker .paste-collapse.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .baidu-map-address-picker .paste-box {
+      position: relative;
+      background: #f8f8f8;
+      border: 0.27vw solid #f0f0f0;
+      border-radius: 3.2vw;
+      overflow: hidden;
+    }
+    .baidu-map-address-picker textarea::placeholder {
+      font-size: 3.47vw;
+      color: #b9b9b9;
+    }
+    .baidu-map-address-picker .paste-textarea::-webkit-input-placeholder {
+      font-size: 3.47vw;
+      color: #b9b9b9;
+    }
+
+    .baidu-map-address-picker .paste-textarea {
+      width: 100%;
+      min-height: 30.93vw;
+      border: none;
+      outline: none;
+      resize: none;
+      border-radius: 0;
+      padding: 3.2vw 3.2vw 12.27vw;
+      font-size: 3.73vw;
+      color: #333;
+      line-height: 1.6;
+      background: #f8f8f8;
+    }
+
+    .baidu-map-address-picker .paste-actions {
+      position: absolute;
+      right: 3.2vw;
+      bottom: 3.2vw;
+      display: flex;
+      align-items: center;
+      gap: 3.2vw;
+    }
+
+    .baidu-map-address-picker .paste-action-btn {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 3.73vw;
+      line-height: 5.33vw;
+      padding: 0;
+    }
+
+    .baidu-map-address-picker .paste-action-btn.clear-btn {
+      color: #999;
+    }
+
+    .baidu-map-address-picker .paste-action-btn.submit-btn {
+      min-width: 17.07vw;
+      padding: 0 2.67vw;
+      height: 7.47vw;
+      border-radius: 1.6vw;
+      background: linear-gradient(180deg, #ff6666 0%, #ff3434 100%);
+      color: #fff;
+    }
+
+    .baidu-map-address-picker .paste-action-btn.submit-btn.loading, .baidu-map-address-picker .paste-action-btn.submit-btn:disabled {
+      opacity: 0.72;
+      cursor: not-allowed;
+    }
+
+    .baidu-map-address-picker .clipboard-bar {
+      margin-top: 3.2vw;
+      text-align: center;
+      font-size: 3.73vw;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.6vw;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .clipboard-arrow {
+      width: 3.2vw;
+      height: 3.2vw;
+      background: url('./eglass-arrow-down.png') center/contain no-repeat;
+      transition: transform 0.24s ease;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .clipboard-arrow.expanded {
+      transform: rotate(180deg);
+    }
+
+    .baidu-map-address-picker .risk-box {
+      margin-top: 2.67vw;
+      padding: 2.67vw 3.2vw;
+      background: #fff2f0;
+      border: 0.27vw solid #ffccc7;
+      border-radius: 2.67vw;
+      color: #cf1322;
+      font-size: 3.47vw;
+      line-height: 1.7;
+    }
+
+    .baidu-map-address-picker .sheet-footer {
+      padding: 3.2vw 2.67vw;
+      padding-bottom: 11.2vw;
+      position: absolute;
+      width: 100vw;
+      bottom: 0;
+      background-color: #fff
+    }
+
+    .baidu-map-address-picker .full-page {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .baidu-map-address-picker .full-header, .baidu-map-address-picker .search-page-header {
+      height: 13.87vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: #fff;
+      border-bottom: 0.27vw solid #f2f2f2;
+      font-size: 4.8vw;
+      flex-shrink: 0;
+      color: #222;
+    }
+
+    .baidu-map-address-picker .back-btn, .baidu-map-address-picker .search-back-btn {
+      position: absolute;
+      left: 3.73vw;
+      top: 50%;
+      width: 3.73vw;
+      height: 3.73vw;
+      border-left: 0.53vw solid #202020;
+      border-bottom: 0.53vw solid #202020;
+      transform-origin: center;   
+    }
+
+    .baidu-map-address-picker .back-btn {
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .baidu-map-address-picker .search-back-btn {
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .baidu-map-address-picker .search-wrap {
+      background: #fff;
+      padding: 2.67vw 3.2vw 3.2vw;
+      border-bottom: 0.27vw solid #f5f5f5;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .search-row {
+      display: flex;
+      align-items: center;
+      gap: 2.67vw;
+    }
+
+    .baidu-map-address-picker .city-name {
+      font-size: 4.27vw;
+      color: #333;
+      flex-shrink: 0;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .search-box {
+      flex: 1;
+      height: 10.67vw;
+      display: flex;
+      align-items: center;
+      background: #f4f4f6;
+      border-radius: 2.67vw;
+      padding: 0 2.67vw;
+    }
+
+    .baidu-map-address-picker .search-icon {
+      width: 4.8vw;
+      height: 4.8vw;
+      margin-right: 1.6vw;
+      background: url("./research-icon.png") center center / 4.8vw 4.8vw no-repeat;
+      flex-shrink: 0;
+      opacity: 0.75;
+    }
+
+    .baidu-map-address-picker .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 3.73vw;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .map-area {
+      height: 85.33vw;
+      position: relative;
+      background: #e8eef3;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .map-box-full {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    .baidu-map-address-picker .center-marker {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 7.47vw;
+      height: 10.13vw;
+      transform: translate(-50%, -100%);
+      z-index: 12;
+      pointer-events: none;
+      background: url("./research-location-icon.png") center center / 12.8vw 12.8vw no-repeat;
+    }
+
+    .baidu-map-address-picker .center-marker.bouncing {
+      animation: baidu-map-address-picker-marker-bounce-once 0.52s ease-out;
+    }
+
+   @keyframes baidu-map-address-picker-marker-bounce-once {
+      0% {
+        transform: translate(-50%, -100%) scale(1);
+      }
+      22% {
+        transform: translate(-50%, -136%) scale(1.03);
+      }
+      48% {
+        transform: translate(-50%, -96%) scale(0.97);
+      }
+      100% {
+        transform: translate(-50%, -100%) scale(1);
+      }
+    }
+
+    .baidu-map-address-picker .center-marker-current-dot {
+      position: absolute;
+      width: 22.4vw;
+      height: 22.4vw;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: rgba(55, 167, 255, 0.18);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .baidu-map-address-picker .center-marker-current-dot::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 8vw;
+      height: 8vw;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(36, 145, 255, 0.28);
+    }
+
+    .baidu-map-address-picker .center-marker-current-dot::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 4.8vw;
+      height: 4.8vw;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: #1492ff;
+      box-shadow: 0 0 0 1.07vw rgba(255, 255, 255, 0.75);
+    }
+
+    .baidu-map-address-picker .center-marker-bubble {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, calc(-100% - 14.4vw));
+      max-width: 58.67vw;
+      min-height: 8vw;
+      padding: 1.6vw 3.2vw;
+      border-radius: 4.27vw;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 1.6vw 4.8vw rgba(0, 0, 0, 0.12);
+      font-size: 3.47vw;
+      line-height: 4.8vw;
+      color: #333;
+      text-align: center;
+      z-index: 11;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .baidu-map-address-picker .center-marker-bubble::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -1.6vw;
+      width: 3.2vw;
+      height: 3.2vw;
+      background: rgba(255, 255, 255, 0.96);
+      transform: translateX(-50%) rotate(45deg);
+      box-shadow: 0.8vw 0.8vw 2.13vw rgba(0, 0, 0, 0.04);
+    }
+
+    .baidu-map-address-picker .map-locate-btn {
+      position: absolute;
+      right: 3.2vw;
+      bottom: 3.2vw;
+      width: 10.67vw;
+      height: 10.67vw;
+      border: none;
+      outline: none;
+      border-radius: 2.13vw;
+      background: #fff url("./research-list-location-gray-icon.png") center center / 5.87vw 5.87vw no-repeat;
+      box-shadow: 0 0.53vw 2.13vw rgba(0,0,0,0.12);
+      z-index: 20;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .nearby-list, .baidu-map-address-picker .search-result-list {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .baidu-map-address-picker .nearby-item, .baidu-map-address-picker .search-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 2.67vw;
+      padding: 3.73vw 3.2vw;
+      border-bottom: 0.27vw solid #f3f3f3;    
+    }
+
+    .baidu-map-address-picker .nearby-item.active-item {
+      background: #fff;
+    }
+
+    .baidu-map-address-picker .nearby-left, .baidu-map-address-picker .search-item-left {
+      display: flex;
+      gap: 2.67vw;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .baidu-map-address-picker .nearby-icon, .baidu-map-address-picker .search-item-icon {
+      width: 4.8vw;
+      height: 4.8vw;
+      margin-top: 0.53vw;
+      flex-shrink: 0;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 4.8vw 4.8vw;
+    }
+
+    .baidu-map-address-picker .nearby-icon.active {
+      background-image: url("./research-list-location-icon.png");
+    }
+
+    .baidu-map-address-picker .nearby-icon.normal, .baidu-map-address-picker .search-item-icon {
+      background-image: url("./research-list-location-gray-icon.png");
+    }
+
+    .baidu-map-address-picker .nearby-name, .baidu-map-address-picker .search-item-name {
+      font-size: 4.27vw;
+      font-weight: bold;
+      color: #333;
+      line-height: 1.45;
+    }
+
+    .baidu-map-address-picker .nearby-item.active-item .nearby-name {
+      color: #ef4444;
+    }
+
+    .baidu-map-address-picker .search-item-name .match-text {
+      color: #d73a32;
+    }
+
+    .baidu-map-address-picker .nearby-address, .baidu-map-address-picker .search-item-address {
+      margin-top: 0.53vw;
+      font-size: 3.47vw;
+      color: #888;
+      line-height: 1.55;
+      word-break: break-all;
+    }
+
+    .baidu-map-address-picker .nearby-distance, .baidu-map-address-picker .search-item-distance {
+      flex-shrink: 0;
+      font-size: 3.2vw;
+      color: #999;
+      margin-top: 0.8vw;
+    }
+
+    .baidu-map-address-picker .search-page {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 1150;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .baidu-map-address-picker .city-picker-page {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 1160;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .baidu-map-address-picker .city-picker-top {
+      display: flex;
+      align-items: center;
+      gap: 3.2vw;
+      padding: 3.2vw 3.73vw 2.67vw;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .city-picker-search {
+      flex: 1;
+      height: 11.2vw;
+      display: flex;
+      align-items: center;
+      background: #f5f6f8;
+      border-radius: 5.87vw;
+      padding: 0 3.73vw;
+    }
+
+    .baidu-map-address-picker .city-picker-search .search-icon {
+      width: 5.33vw;
+      height: 5.33vw;
+      margin-right: 2.13vw;
+      background-size: 5.33vw 5.33vw;
+      opacity: 0.7;
+    }
+
+    .baidu-map-address-picker .city-picker-input {
+      flex: 1;
+      height: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 4vw;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .city-picker-cancel {
+      flex-shrink: 0;
+      font-size: 4vw;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .city-picker-current-letter {
+      height: 12.27vw;
+      display: flex;
+      align-items: center;
+      padding: 0 4.27vw;
+      background: #fff;
+      border-bottom: 0.27vw solid #f4f4f4;
+      font-size: 4.8vw;
+      line-height: 6.93vw;
+      color: #222;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .city-picker-section {
+      padding: 3.73vw 4.27vw 0;
+    }
+
+    .baidu-map-address-picker .city-picker-section-title {
+      font-size: 4vw;
+      color: #8b8b8b;
+      line-height: 5.87vw;
+      margin-bottom: 3.73vw;
+    }
+
+    .baidu-map-address-picker .city-picker-current {
+      display: flex;
+      align-items: center;
+      gap: 2.67vw;
+      padding-bottom: 4.8vw;
+      border-bottom: 0.27vw solid #f1f1f1;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .city-picker-current-icon {
+      width: 6.4vw;
+      height: 6.4vw;
+      flex-shrink: 0;
+      background: url("./research-list-location-icon.png") center center / 6.4vw 6.4vw no-repeat;
+    }
+
+    .baidu-map-address-picker .city-picker-current-name {
+      font-size: 6.4vw;
+      line-height: 8.53vw;
+      color: #111;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .city-picker-list {
+      position: relative;
+      padding: 0 0 6.4vw;
+    }
+
+    .baidu-map-address-picker .city-picker-group {
+      padding: 0 4.27vw;
+    }
+
+    .baidu-map-address-picker .city-picker-group-letter {
+      font-size: 4.8vw;
+      line-height: 6.93vw;
+      color: #333;
+      font-weight: bold;
+      padding: 4.8vw 0 3.2vw;
+      border-bottom: 0.27vw solid #f5f5f5;
+    }
+
+    .baidu-map-address-picker .city-picker-item {
+      height: 14.93vw;
+      display: flex;
+      align-items: center;
+      font-size: 4.53vw;
+      color: #222;
+      border-bottom: 0.27vw solid #f5f5f5;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .city-picker-empty {
+      padding: 19.2vw 6.4vw 0;
+      text-align: center;
+      font-size: 4vw;
+      color: #999;
+    }
+
+    .baidu-map-address-picker .city-picker-index {
+      position: absolute;
+      right: 2.13vw;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8vw;
+      padding: 2.13vw 0;
+      border-radius: 4vw;
+      background: rgba(244, 244, 244, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.13vw;
+      z-index: 8;
+    }
+
+    .baidu-map-address-picker .city-picker-index span {
+      font-size: 3.2vw;
+      line-height: 1;
+      color: #8f8f8f;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .city-picker-index span.active {
+      color: #222;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .city-picker-letter-toast {
+      position: absolute;
+      right: 14.93vw;
+      top: 50%;
+      width: 11.73vw;
+      height: 11.73vw;
+      margin-top: -5.87vw;
+      border-radius: 3.73vw;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+      box-shadow: 0 2.13vw 4.8vw rgba(0, 0, 0, 0.12), inset 0 0.27vw 0 rgba(255, 255, 255, 0.92);
+      border: 0.27vw solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7.47vw;
+      line-height: 1;
+      color: #7a7a7a;
+      font-weight: bold;
+      z-index: 9;
+      pointer-events: none;
+    }
+
+    .baidu-map-address-picker .search-page-box-wrap {
+      padding: 3.73vw 3.73vw 2.67vw;
+      background: #fff;
+    }
+
+    .baidu-map-address-picker .search-page-box {
+      height: 10.67vw;
+      display: flex;
+      align-items: center;
+      background: #f4f4f6;
+      border-radius: 2.13vw;
+      padding: 0 2.67vw;
+    }
+
+    .baidu-map-address-picker .search-page-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 3.73vw;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .search-empty {
+      padding: 16vw 5.33vw;
+      text-align: center;
+      color: #999;
+      font-size: 3.73vw;
+    }
+
+    .baidu-map-address-picker .search-tip-bottom {
+      padding: 3.2vw 4.27vw 4.8vw;
+      font-size: 3.2vw;
+      line-height: 1.6;
+      color: #999;
+      text-align: center;
+      border-top: 0.27vw solid #f5f5f5;
+      flex-shrink: 0;
+      background: #fff;
+    }
+
+    .baidu-map-address-picker .confirm-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background: rgba(0, 0, 0, 0.48);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6.4vw;
+    }
+
+    .baidu-map-address-picker .confirm-dialog {
+      width: 100%;
+      max-width: 112vw;
+      background: #fff;
+      border-radius: 4.27vw;
+      overflow: hidden;
+    }
+
+    .baidu-map-address-picker .confirm-header {
+      padding: 4.27vw 4.27vw 2.13vw;
+      font-size: 4.8vw;
+      font-weight: bold;
+      color: #cf1322;
+    }
+
+    .baidu-map-address-picker .confirm-list {
+      margin-top: 2.67vw;
+      padding: 2.67vw 3.2vw;
+      background: #fff2f0;
+      border: 0.27vw solid #ffccc7;
+      border-radius: 2.67vw;
+      color: #cf1322;
+      font-size: 3.47vw;
+      line-height: 1.7;
+    }
+
+    .baidu-map-address-picker .confirm-footer {
+      display: flex;
+      border-top: 0.27vw solid #f0f0f0;
+    }
+
+    .baidu-map-address-picker .confirm-btn {
+      flex: 1;
+      height: 12.8vw;
+      border: none;
+      background: #fff;
+      font-size: 4vw;
+      
+    }
+
+    .baidu-map-address-picker .confirm-btn + .confirm-btn {
+      border-left: 0.27vw solid #f0f0f0;
+    }
+
+    .baidu-map-address-picker .confirm-btn.cancel {
+      color: #666;
+    }
+
+    .baidu-map-address-picker .confirm-btn.ok {
+      color: #ff4d4f;
+      font-weight: bold
+    }
+
+    .baidu-map-address-picker .paste-confirm-dialog {
+      max-width: 300px;
+      border-radius: 10px;
+    }
+
+    .baidu-map-address-picker .paste-confirm-header {
+      padding: 18px 18px 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .paste-confirm-line + .paste-confirm-line {
+      margin-top: 6px;
+    }
+
+    .baidu-map-address-picker .paste-confirm-label {
+      color: #666;
+    }
+
+    .baidu-map-address-picker .paste-confirm-value {
+      color: #333;
+      word-break: break-all;
+    }
+
+    .baidu-map-address-picker .paste-confirm-footer {
+      padding: 0 18px 18px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .baidu-map-address-picker .paste-confirm-footer .confirm-btn {
+      height: 40px;
+      border-radius: 4px;
+      border: none;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .paste-confirm-footer .confirm-btn.cancel {
+      background: #f3f4f8;
+      color: #333;
+    }
+
+    .baidu-map-address-picker .paste-confirm-footer .confirm-btn.ok {
+      background: linear-gradient(180deg, #ff6666 0%, #ff3434 100%);
+      color: #fff;
+    }
+
+    .baidu-map-address-picker .vant-alert-dialog {
+      max-width: 320px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .baidu-map-address-picker .vant-alert-header {
+      padding: 20px 20px 8px;
+      font-size: 20px;
+      line-height: 28px;
+      color: #323233;
+      font-weight: bold;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    .baidu-map-address-picker .vant-alert-footer {
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .baidu-map-address-picker .vant-alert-btn {
+      min-width: 88px;
+      height: 40px;
+      padding: 0 20px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #ff6767 0%, #ff3b30 100%);
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+    }
+
+    .baidu-map-address-picker .region-selector-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 1160;
+      background: rgba(0, 0, 0, 0.38);
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .baidu-map-address-picker .region-selector-panel {
+      width: 100%;
+      height: 80vh;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      overscroll-behavior: contain;
+    }
+
+    .baidu-map-address-picker .region-selector-header {
+      position: relative;
+      height: 56px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #f5f5f5;
+      background: #fff;
+    }
+
+    .baidu-map-address-picker .region-top-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+    }
+
+    .baidu-map-address-picker .region-top-tab {
+      position: relative;
+      font-size: 16px;
+      color: #666;
+      padding: 0 2px 8px;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .region-top-tab.active {
+      color: #222;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .region-top-tab.active::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 24px;
+      height: 2px;
+      background: #ff4d4f;
+      border-radius: 2px;
+      transform: translateX(-50%);
+    }
+
+    .baidu-map-address-picker .region-selector-close {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 24px;
+      color: #aaa;
+      line-height: 1;
+    }
+
+    .baidu-map-address-picker .region-hot-block {
+      padding: 16px 12px 6px;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .region-block-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 12px;
+    }
+
+    .baidu-map-address-picker .hot-city-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 10px;
+    }
+
+    .baidu-map-address-picker .hot-city-item {
+      min-width: 70px;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 4px;
+      background: #f7f7f7;
+      color: #333;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      
+    }
+
+    .baidu-map-address-picker .region-selected-bar {
+      padding: 14px 12px 12px;
+      border-bottom: 1px solid #f5f5f5;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      min-height: 58px;
+    }
+
+    .baidu-map-address-picker .region-chip-separator {
+      color: #d5d5d5;
+      font-size: 18px;
+      line-height: 34px;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .region-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 16px;
+      border-radius: 6px;
+      border: 1px solid #f3f4f7;
+      color: #333;
+      font-size: 15px;
+      background: #f7f7fb;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .baidu-map-address-picker .region-chip.active {
+      border-color: #ff4d4f;
+      color: #ff4d4f;
+      background: #fff7f7;
+      box-shadow: inset 0 0 0 1px rgba(255, 77, 79, 0.08);
+    }
+
+    .baidu-map-address-picker .region-list-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 40px 16px 0;
+      position: relative;
+      scroll-behavior: smooth;
+    }
+
+    .baidu-map-address-picker .region-group {
+      display: flex;
+      align-items: flex-start;
+      padding: 4px 0 0 12px;
+    }
+
+    .baidu-map-address-picker .region-group-letter {
+      width: 16px;
+      flex-shrink: 0;
+      font-size: 16px;
+      color: #888;
+      line-height: 34px;
+      padding-top: 8px;
+    }
+
+    .baidu-map-address-picker .region-group-items {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .baidu-map-address-picker .region-list-item {
+      padding: 12px 0 12px 18px;
+      font-size: 16px;
+      color: #333;
+      border-bottom: 1px solid #f7f7f7;
+      
+    }
+
+    .baidu-map-address-picker .region-list-item.active {
+      color: #ff4d4f;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .region-side-index {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 3;
+      pointer-events: auto;
+      user-select: none;
+    }
+
+    .baidu-map-address-picker .region-side-index span {
+      width: 22px;
+      height: 22px;
+      font-size: 11px;
+      color: #999;
+      line-height: 22px;
+      text-align: center;
+      border-radius: 50%;
+      
+    }
+
+    .baidu-map-address-picker .region-side-index span.active {
+      background: #ff4d4f;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .baidu-map-address-picker .oversea-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0 16px;
+    }
+
+    .baidu-map-address-picker .oversea-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f6f6f6;
+      font-size: 16px;
+      color: #333;
+      
+    }
+
+    .baidu-map-address-picker .oversea-item.active {
+      color: #ff4d4f;
+      font-weight: bold;
+    }
+
+    /* ===== 动画 ===== */
+    .baidu-map-address-picker .fade-mask-enter-active, .baidu-map-address-picker .fade-mask-leave-active {
+      transition: opacity 0.22s ease;
+    }
+
+    .baidu-map-address-picker .fade-mask-enter, .baidu-map-address-picker .fade-mask-leave-to {
+      opacity: 0;
+    }
+
+    .baidu-map-address-picker .slide-up-sheet-enter-active, .baidu-map-address-picker .slide-up-sheet-leave-active {
+      transition: transform 0.28s cubic-bezier(.36, .66, .04, 1), opacity 0.28s ease;
+      will-change: transform, opacity;
+    }
+
+    .baidu-map-address-picker .slide-up-sheet-enter, .baidu-map-address-picker .slide-up-sheet-leave-to {
+      transform: translate3d(0, 100%, 0);
+      opacity: 0.98;
+    }
+
+    .baidu-map-address-picker .slide-left-page-enter-active, .baidu-map-address-picker .slide-left-page-leave-active {
+      transition: transform 0.3s cubic-bezier(.36, .66, .04, 1), opacity 0.3s ease;
+      will-change: transform, opacity;
+    }
+
+    .baidu-map-address-picker .slide-left-page-enter, .baidu-map-address-picker .slide-left-page-leave-to {
+      transform: translate3d(100%, 0, 0);
+      opacity: 1;
+    }
+
+    .baidu-map-address-picker .fade-tab-enter-active, .baidu-map-address-picker .fade-tab-leave-active {
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .baidu-map-address-picker .fade-tab-enter, .baidu-map-address-picker .fade-tab-leave-to {
+      opacity: 0;
+      transform: translate3d(0, 8px, 0);
+    }
+
+    .baidu-map-address-picker .full-page, .baidu-map-address-picker .search-page, .baidu-map-address-picker .sheet, .baidu-map-address-picker .region-selector-panel, .baidu-map-address-picker .confirm-dialog {
+      will-change: transform, opacity;
+    }
+
+    .baidu-map-address-picker .confirm-mask .confirm-dialog {
+      transform: scale(1);
+      transition: transform 0.22s ease, opacity 0.22s ease;
+    }
+
+    .baidu-map-address-picker .fade-mask-enter .confirm-dialog, .baidu-map-address-picker .fade-mask-leave-to .confirm-dialog {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+
