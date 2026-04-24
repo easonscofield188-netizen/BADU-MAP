@@ -1100,21 +1100,37 @@ data: function () {
         return refMap[type] || '';
       },
 
-      scrollToRegionLetter: function (type, letter) {
+      getRegionListWrap: function (type) {
         const refName = this.getRegionListWrapRef(type);
-        const wrap = refName ? this.$refs[refName] : null;
-        if (!wrap) return;
+        const ref = refName ? this.$refs[refName] : null;
+        if (!ref) return null;
+        if (!Array.isArray(ref)) return ref;
+        for (let i = 0; i < ref.length; i++) {
+          if (ref[i] && ref[i].offsetParent !== null) {
+            return ref[i];
+          }
+        }
+        return ref[0] || null;
+      },
 
-        const target = wrap.querySelector('[data-letter="' + letter + '"]');
-        if (!target) return;
+      scrollToRegionLetter: function (type, letter) {
+        const self = this;
+        this.$nextTick(function () {
+          const wrap = self.getRegionListWrap(type);
+          if (!wrap) return;
 
-        this.regionIndexActive[type] = letter;
-        wrap.scrollTop = target.offsetTop;
+          const target = wrap.querySelector('[data-letter="' + letter + '"]');
+          if (!target) return;
+
+          self.regionIndexActive[type] = letter;
+          const wrapRect = wrap.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          wrap.scrollTop += targetRect.top - wrapRect.top;
+        });
       },
 
       handleRegionListScroll: function (type) {
-        const refName = this.getRegionListWrapRef(type);
-        const wrap = refName ? this.$refs[refName] : null;
+        const wrap = this.getRegionListWrap(type);
         if (!wrap) return;
 
         const groups = wrap.querySelectorAll('.region-group[data-letter]');
@@ -1401,15 +1417,20 @@ data: function () {
       },
 
       scrollToCityPickerLetter: function (letter) {
-        const wrap = this.$refs.cityPickerListWrap;
-        if (!wrap || !letter) return;
+        const self = this;
+        this.$nextTick(function () {
+          const wrap = self.$refs.cityPickerListWrap;
+          if (!wrap || !letter) return;
 
-        this.showCityPickerLetterToast(letter);
-        const target = wrap.querySelector('[data-letter="' + letter + '"]');
-        if (!target) return;
+          self.showCityPickerLetterToast(letter);
+          const target = wrap.querySelector('[data-letter="' + letter + '"]');
+          if (!target) return;
 
-        this.cityPickerIndexActive = letter;
-        wrap.scrollTop = target.offsetTop;
+          self.cityPickerIndexActive = letter;
+          const wrapRect = wrap.getBoundingClientRect();
+          const targetRect = target.getBoundingClientRect();
+          wrap.scrollTop += targetRect.top - wrapRect.top;
+        });
       },
 
       handleCityPickerListScroll: function () {
@@ -2775,4 +2796,3 @@ data: function () {
     global.Vue.component(componentName, component);
   }
 })(window);
-

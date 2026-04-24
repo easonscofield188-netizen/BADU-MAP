@@ -848,6 +848,15 @@
       flex-shrink: 0;
     }
 
+    .baidu-map-address-picker .city-picker-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 10.67vw;
+      position: relative;
+    }
+
     .baidu-map-address-picker .city-picker-section {
       padding: 3.73vw 4.27vw 0;
     }
@@ -1188,6 +1197,15 @@
       background: #fff;
     }
 
+    .baidu-map-address-picker .region-selector-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
     .baidu-map-address-picker .region-top-tabs {
       display: flex;
       align-items: center;
@@ -1304,7 +1322,9 @@
 
     .baidu-map-address-picker .region-list-wrap {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 4px 40px 16px 0;
       position: relative;
       scroll-behavior: smooth;
