@@ -778,151 +778,145 @@
     // data 的返回值是组件内部的响应式状态，模板里展示的内容大多来自这里。
     data: function () {
       return {
-        // 当前主标签页：map 表示地图选址，region 表示行政区选址。
-        activeTab: 'map',
-        // 弹层和页面显示状态：true 表示显示，false 表示隐藏。
-        showAddressSheet: false,
-        showLocationPicker: false,
-        showSearchPage: false,
-        showCityPickerPage: false,
-        showRiskConfirm: false,
-        showPasteConfirm: false,
-        showVantAlert: false,
-        showRegionSelector: false,
-        showPasteBoard: false,
+        activeTab: 'map', // 当前主标签页：map 表示地图选址，region 表示行政区选址。
+        showAddressSheet: false, // 弹层和页面显示状态：true 表示显示，false 表示隐藏。
+        showLocationPicker: false, // 是否显示地图定位选址页。
+        showSearchPage: false, // 是否显示地址搜索页。
+        showCityPickerPage: false, // 是否显示城市选择页。
+        showRiskConfirm: false, // 是否显示地址风险确认弹窗。
+        showPasteConfirm: false, // 是否显示粘贴识别结果确认弹窗。
+        showVantAlert: false, // 是否显示统一提示弹窗。
+        showRegionSelector: false, // 是否显示省市区选择弹窗。
+        showPasteBoard: false, // 是否展开地址粘贴板。
         // 操作状态：用于控制加载中、动画中、拖拽中等临时 UI 状态。
-        isParsingPaste: false,
-        isMarkerBouncing: false,
-        isPickerMapDragging: false,
-        markerBounceTimer: null,
-
-        sheetProviceCityDistrict: '',
-
+        isParsingPaste: false, // 是否正在解析粘贴的地址文本。
+        isMarkerBouncing: false, // 地图中心标记是否正在播放跳动动画。
+        isPickerMapDragging: false, // 用户是否正在拖动地图。
+        markerBounceTimer: null, // 地图中心标记跳动动画定时器。
+        sheetProviceCityDistrict: '', // 地图选址面板展示的省市区文本。
         // 百度地图服务实例：定位、逆地址解析、地图实例会存到这里复用。
-        geolocation: null,
-        geocoder: null,
-
-        pickerMapInstance: null,
-        pickerGeocoder: null,
-        searchPageTimer: null,
-
+        geolocation: null, // 百度地图定位服务实例。
+        geocoder: null, // 百度地图逆地址解析服务实例。
+        pickerMapInstance: null, // 地图选址页的地图实例。
+        pickerGeocoder: null, // 地图选址页使用的逆地址解析实例。
+        searchPageTimer: null, // 地址搜索输入防抖定时器。
         // 当前定位地址：浏览器定位成功后，会把坐标和省市区等信息存到这里。
-        currentLocation: {
-          point: null,
-          title: '',
-          name: '',
-          address: '',
-          province: '',
-          city: '',
-          district: '',
-          street: '',
-          streetNumber: ''
+        currentLocation: { // 当前定位地址对象。
+          point: null, // 当前定位坐标点。
+          title: '', // 当前定位地址标题。
+          name: '', // 当前定位地址名称。
+          address: '', // 当前定位详细地址。
+          province: '', // 当前定位省份。
+          city: '', // 当前定位城市。
+          district: '', // 当前定位区县。
+          street: '', // 当前定位街道。
+          streetNumber: '' // 当前定位门牌号。
         },
 
-        currentLocationMarkerStyle: {
-          display: 'none',
-          left: '50%',
-          top: '50%'
+        currentLocationMarkerStyle: { // 当前位置标记样式对象。
+          display: 'none', // 当前位置标记是否显示。
+          left: '50%', // 当前位置标记横向位置。
+          top: '50%' // 当前位置标记纵向位置。
         },
 
         // 当前已选地图地址：用户在地图或搜索结果中选中的地址会存到这里。
-        selectedLocation: {
-          point: null,
-          title: '',
-          name: '',
-          address: '',
-          province: '',
-          city: '',
-          district: '',
-          street: '',
-          streetNumber: ''
+        selectedLocation: { // 当前已选地图地址对象。
+          point: null, // 已选地图地址坐标点。
+          title: '', // 已选地图地址标题。
+          name: '', // 已选地图地址名称。
+          address: '', // 已选地图详细地址。
+          province: '', // 已选地图地址省份。
+          city: '', // 已选地图地址城市。
+          district: '', // 已选地图地址区县。
+          street: '', // 已选地图地址街道。
+          streetNumber: '' // 已选地图地址门牌号。
         },
 
-        sheetAddressTitle: '',
-        sheetAddressText: '',
-        sheetDoorNumber: '',
+        sheetAddressTitle: '', // 底部面板展示的地图地址标题。
+        sheetAddressText: '', // 底部面板展示的地图详细地址。
+        sheetDoorNumber: '', // 用户填写的地图选址门牌号。
 
-        pasteText: '',
+        pasteText: '', // 地址粘贴板文本内容。
 
-        pickerKeyword: '',
-        pickerCityText: '',
-        pickerCityManuallySelected: false,
-        cityPickerKeyword: '',
-        cityPickerIndexActive: '',
-        cityPickerToastLetter: '',
-        cityPickerToastTimer: null,
-        nearbyList: [],
+        pickerKeyword: '', // 地图选址页搜索框展示关键词。
+        pickerCityText: '', // 地图选址页当前城市完整文本。
+        pickerCityManuallySelected: false, // 当前城市是否由用户手动选择。
+        cityPickerKeyword: '', // 城市选择页搜索关键词。
+        cityPickerIndexActive: '', // 城市选择页右侧当前高亮字母。
+        cityPickerToastLetter: '', // 城市选择页放大提示字母。
+        cityPickerToastTimer: null, // 城市选择页放大字母提示定时器。
+        nearbyList: [], // 地图中心点附近地址列表。
 
-        searchPageKeyword: '',
-        searchResultList: [],
+        searchPageKeyword: '', // 地址搜索页输入关键词。
+        searchResultList: [], // 地址搜索页结果列表。
 
         // 地址风险提示：当输入地址和地图识别结果不一致时，会把提示放到这里。
-        addressRiskList: [],
-        addressRiskText: '',
-        riskConfirmed: false,
+        addressRiskList: [], // 地址风险提示列表。
+        addressRiskText: '', // 地址风险提示合并文本。
+        riskConfirmed: false, // 用户是否已确认继续使用风险地址。
 
-        pendingPayload: null,
-        pendingPasteSelection: null,
+        pendingPayload: null, // 等待风险确认后提交的地址数据。
+        pendingPasteSelection: null, // 等待用户确认的粘贴识别候选数据。
         // 粘贴识别确认数据：用于弹窗展示识别到的地区和详细地址。
-        pasteConfirmData: {
-          regionText: '',
-          detailAddress: ''
+        pasteConfirmData: { // 粘贴识别确认弹窗展示数据。
+          regionText: '', // 粘贴识别出的地区文本。
+          detailAddress: '' // 粘贴识别出的详细地址。
         },
 
-        vantAlert: {
-          title: '温馨提示',
-          message: ''
+        vantAlert: { // 统一提示弹窗数据。
+          title: '温馨提示', // 统一提示弹窗标题。
+          message: '' // 统一提示弹窗内容。
         },
 
-        regionDisplayText: '',
+        regionDisplayText: '', // 地区选址行展示的省市区文本。
         // 地区选址表单：保存省、市、区和手动填写的详细地址。
-        regionForm: {
-          province: '',
-          city: '',
-          district: '',
-          detailAddress: ''
+        regionForm: { // 地区选址正式表单数据。
+          province: '', // 地区选址已选省份。
+          city: '', // 地区选址已选城市。
+          district: '', // 地区选址已选区县。
+          detailAddress: '' // 地区选址手动填写的详细地址。
         },
 
-        regionSuggestList: [],
-        regionSuggestTimer: null,
-        regionDetailFocused: false,
-        regionDetailBlurTimer: null,
+        regionSuggestList: [], // 地区选址详细地址联想列表。
+        regionSuggestTimer: null, // 地区选址详细地址联想防抖定时器。
+        regionDetailFocused: false, // 地区选址详细地址输入框是否聚焦。
+        regionDetailBlurTimer: null, // 地区选址详细地址输入框失焦延迟定时器。
 
-        regionSelectorTab: 'domestic',
-        regionStep: 'province',
+        regionSelectorTab: 'domestic', // 地区选择器当前标签：domestic 境内，oversea 港澳台。
+        regionStep: 'province', // 地区选择器当前步骤：province、city 或 district。
         // 地区选择器临时值：用户在弹窗里选择时先存在这里，确认后再写入 regionForm。
-        regionTemp: {
-          province: '',
-          city: '',
-          district: ''
+        regionTemp: { // 地区选择器临时选择数据。
+          province: '', // 地区选择器临时省份。
+          city: '', // 地区选择器临时城市。
+          district: '' // 地区选择器临时区县。
         },
-        regionIndexActive: {
-          province: '',
-          city: '',
-          district: '',
-          overseaProvince: ''
+        regionIndexActive: { // 地区选择器右侧字母高亮状态。
+          province: '', // 省份列表右侧当前高亮字母。
+          city: '', // 城市列表右侧当前高亮字母。
+          district: '', // 区县列表右侧当前高亮字母。
+          overseaProvince: '' // 港澳台地区列表右侧当前高亮字母。
         },
-        regionIndexLock: {
-          province: false,
-          city: false,
-          district: false,
-          overseaProvince: false
+        regionIndexLock: { // 地区选择器右侧字母高亮锁定状态。
+          province: false, // 省份列表字母点击后是否锁定高亮。
+          city: false, // 城市列表字母点击后是否锁定高亮。
+          district: false, // 区县列表字母点击后是否锁定高亮。
+          overseaProvince: false // 港澳台地区列表字母点击后是否锁定高亮。
         },
-        regionIndexLockTimer: null,
-        regionToastLetter: '',
-        regionToastTimer: null,
+        regionIndexLockTimer: null, // 地区字母索引高亮锁定定时器。
+        regionToastLetter: '', // 地区选择器放大提示字母。
+        regionToastTimer: null, // 地区选择器放大字母提示定时器。
 
         // 最终提交表单：确认地址时会把地图模式或地区模式的数据整理到这里。
-        form: {
-          province: '',
-          city: '',
-          district: '',
-          street: '',
-          streetNumber: '',
-          fullAddress: '',
-          detailAddress: '',
-          lng: '',
-          lat: ''
+        form: { // 最终提交给父组件的地址表单数据。
+          province: '', // 最终提交省份。
+          city: '', // 最终提交城市。
+          district: '', // 最终提交区县。
+          street: '', // 最终提交街道。
+          streetNumber: '', // 最终提交门牌号。
+          fullAddress: '', // 最终提交完整地址。
+          detailAddress: '', // 最终提交详细地址。
+          lng: '', // 最终提交经度。
+          lat: '' // 最终提交纬度。
         }
       };
     },
