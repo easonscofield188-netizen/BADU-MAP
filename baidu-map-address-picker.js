@@ -1230,6 +1230,8 @@
             clearTimeout(self.regionIndexLockTimer);
           }
 
+          // 主动点击字母索引时会触发滚动事件，这里先锁住高亮状态，
+          // 避免滚动过程中的 handleRegionListScroll 把用户刚点的字母覆盖掉。
           const maxScrollTop = Math.max(0, wrap.scrollHeight - wrap.clientHeight);
           wrap.scrollTop = Math.min(target.offsetTop, maxScrollTop);
 
@@ -1398,6 +1400,7 @@
           return;
         }
 
+        // 先拼出用户已经选择的省市区作为搜索前缀，减少百度地图联想跨城市返回结果。
         const regionKeyword = this.getRegionParts(
           this.regionForm.province,
           this.regionForm.city,
@@ -1428,6 +1431,7 @@
               const city = poi.city || '';
               const district = poi.district || '';
 
+              // 百度地图偶尔会返回相邻城市或同名 POI，这里按已选省市区再做一次过滤。
               if (self.regionForm.province && province && province !== self.regionForm.province) continue;
               if (self.regionForm.city && self.regionForm.city !== '市辖区' && city && city !== self.regionForm.city) continue;
               if (self.regionForm.district && district && district !== self.regionForm.district) continue;
@@ -2183,33 +2187,6 @@
         return parts;
       },
 
-      // 把标准省份名转成选择器里使用的简称。
-      getProvinceSelectorValue: function (name) {
-        let value = (name || '').trim();
-        if (!value) return '';
-
-        const reverseProvinceMap = {
-          '北京市': '北京',
-          '天津市': '天津',
-          '上海市': '上海',
-          '重庆市': '重庆',
-          '内蒙古自治区': '内蒙古',
-          '广西壮族自治区': '广西',
-          '西藏自治区': '西藏',
-          '宁夏回族自治区': '宁夏',
-          '新疆维吾尔自治区': '新疆',
-          '香港特别行政区': '香港',
-          '澳门特别行政区': '澳门',
-          '台湾省': '台湾'
-        };
-
-        if (reverseProvinceMap[value]) {
-          return reverseProvinceMap[value];
-        }
-
-        return value.replace(/省$/, '');
-      },
-
       // 在地区树中查找指定省份节点。
       findProvinceNode: function (name) {
         const fullName = this.formatProvinceName(name);
@@ -2465,11 +2442,13 @@
         const cleaned = this.cleanAddressText(text);
         const parsed = this.simpleParseAddress(cleaned);
 
+        // 如果粘贴内容只有省市区，就切到地区选址模式；这种场景没有具体 POI，不适合按地图点位回填。
         if (this.isRegionOnlyPaste(cleaned, parsed)) {
           this.handleRegionOnlyPaste(cleaned, parsed);
           return;
         }
 
+        // 地图服务不可用时仍然保留正则解析结果，让用户能确认或手动修正地址。
         if (!this.geocoder) {
           const fallbackLocation = {
             point: null,
@@ -2492,6 +2471,7 @@
         this.searchAddressByText(cleaned, function (result) {
           let finalLocation;
           if (result) {
+            // 地图搜索结果优先提供坐标和标准省市区，正则解析结果用于补足门牌、标题等细节。
             finalLocation = {
               point: result.point,
               title: self.buildSearchDisplayTitle(parsed, result),
@@ -2508,6 +2488,7 @@
               self.pickerMapInstance.centerAndZoom(result.point, 18);
             }
           } else {
+            // 未搜索到 POI 时回退到纯文本解析，避免用户粘贴地址后没有任何可确认结果。
             finalLocation = {
               point: null,
               title: parsed.name || parsed.detail || '已识别地址',
@@ -2552,6 +2533,7 @@
       handleRegionOnlyPaste: function (cleaned, parsed) {
         const self = this;
 
+        // 统一回填地区选址表单，并清空地图选址中的点位和门牌，避免两种模式的数据互相污染。
         const applyRegion = function (province, city, district, riskLocation) {
           self.selectedLocation = {
             point: null,
@@ -2600,6 +2582,7 @@
           const city = (result && result.city) || parsed.city || fallbackCity || '';
           let district = parsed.district || '';
 
+          // 只粘贴“省+市”时，优先使用定位或搜索结果补区县；如果用户明确粘贴了区县，则以地图结果校准。
           if (!district) {
             if (parsed.province && parsed.city) {
               district = fallbackDistrict || (result && result.district) || '';
@@ -2794,12 +2777,14 @@
         const source = text || '';
         let remain = source;
 
+        // 先按省级行政区切分，直辖市、自治区、港澳台需要放在普通“省”规则前面匹配。
         const provinceMatch = source.match(/(北京市|天津市|上海市|重庆市|香港特别行政区|澳门特别行政区|内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区|[^省]+省)/);
         if (provinceMatch) {
           result.province = this.formatProvinceName(provinceMatch[0]);
           remain = remain.replace(provinceMatch[0], '');
         }
 
+        // 每识别出一级行政区就从 remain 中移除，后续街道和门牌提取就不会重复包含省市区。
         const cityMatch = remain.match(/([^市]+市|[^州]+州|[^地区]+地区|[^盟]+盟)/);
         if (cityMatch) result.city = cityMatch[0];
 
@@ -2812,6 +2797,7 @@
 
         if (result.district) remain = remain.replace(result.district, '');
 
+        // 尾部通常是门牌、楼栋、单元或房号；识别不到时把剩余文本作为详细地址。
         const houseMatch = remain.match(/([A-Za-z0-9一二三四五六七八九十百千号栋幢单元室层楼\-]+)$/);
         result.detail = houseMatch ? houseMatch[0] : remain.trim();
 
@@ -2863,6 +2849,7 @@
               return;
             }
 
+            // 先拿 LocalSearch 的 POI 点位，再用逆地址解析获取更稳定的省市区、街道和门牌字段。
             self.geocoder.getLocation(poi.point, function (rs) {
               const ac = rs && rs.addressComponents ? rs.addressComponents : {};
               callback({
@@ -2894,6 +2881,7 @@
         const finalCity = finalLocation && finalLocation.city ? finalLocation.city : '';
         const finalDistrict = finalLocation && finalLocation.district ? finalLocation.district : '';
 
+        // 风险校验只提示用户，不阻断提交；用户在风险弹窗确认后仍可继续使用该地址。
         if (!inputProvince || !inputCity || !inputDistrict) {
           risks.push('输入地址中的省、市、区信息可能不完整');
         }
@@ -2981,11 +2969,9 @@
 
       // 保存最终地址结果，并通过事件和 postMessage 通知外部页面。
       savePayload: function (payload) {
-        
         this.$emit('confirm', payload);
         this.$emit('selected', payload);
         this.$emit('input', payload);
-        localStorage.setItem('customer_address_payload', JSON.stringify(payload));
 
         if (window.parent) {
           window.parent.postMessage({
@@ -2994,7 +2980,6 @@
           }, '*');
         }
 
-        console.log('地址确认回填数据:', payload);
         this.showAddressSheet = false;
       },
 
