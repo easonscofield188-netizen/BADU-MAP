@@ -50,7 +50,6 @@
       background: #f6f6f6;
       border-radius: 4.27vw 4.27vw 0 0;
       overflow: hidden;
-      padding-bottom: calc(3.2vw + env(safe-area-inset-bottom));
       max-height: 90vh;
       overscroll-behavior: contain;
       height: 140vw;
@@ -61,7 +60,7 @@
       background: #fff;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       position: relative;
       padding: 0 4.27vw;
       font-size: 4.53vw;
@@ -77,6 +76,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      margin: 5.33vw 2.67vw 0 2.67vw;
     }
 
     .baidu-map-address-picker .sheet-close {
