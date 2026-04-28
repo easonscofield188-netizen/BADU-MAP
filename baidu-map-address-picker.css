@@ -45,6 +45,8 @@
       right: 0;
       bottom: 0;
       z-index: 1001;
+      display: flex;
+      flex-direction: column;
       background: #f6f6f6;
       border-radius: 4.27vw 4.27vw 0 0;
       overflow: hidden;
@@ -66,6 +68,15 @@
       font-weight: bold;
       color: #222;
       border-bottom: 0.27vw solid #f2f2f2;
+      flex-shrink: 0;
+    }
+
+    .baidu-map-address-picker .sheet-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     .baidu-map-address-picker .sheet-close {
@@ -467,9 +478,8 @@
     .baidu-map-address-picker .sheet-footer {
       padding: 3.2vw 2.67vw;
       padding-bottom: 11.2vw;
-      position: absolute;
+      flex-shrink: 0;
       width: 100vw;
-      bottom: 0;
       background-color: #fff
     }
 
@@ -1094,6 +1104,11 @@
       color: #333;
     }
 
+    .baidu-map-address-picker .paste-confirm-body {
+      padding-left: 15px; 
+      padding-bottom: 15px;
+    }
+
     .baidu-map-address-picker .paste-confirm-line + .paste-confirm-line {
       margin-top: 6px;
     }
@@ -1327,7 +1342,6 @@
       -webkit-overflow-scrolling: touch;
       padding: 4px 40px 16px 0;
       position: relative;
-      scroll-behavior: smooth;
     }
 
     .baidu-map-address-picker .region-group {
@@ -1391,6 +1405,28 @@
       background: #ff4d4f;
       color: #fff;
       font-weight: bold;
+    }
+
+    .baidu-map-address-picker .region-letter-toast {
+      position: absolute;
+      right: 58px;
+      top: 50%;
+      width: 44px;
+      height: 44px;
+      margin-top: -22px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      line-height: 1;
+      color: #7a7a7a;
+      font-weight: bold;
+      z-index: 4;
+      pointer-events: none;
     }
 
     .baidu-map-address-picker .oversea-list {
