@@ -2869,6 +2869,34 @@
         localSearch.search(keyword);
       },
 
+      // 提交前校验粘贴板中尚未清空的原始地址，避免用户跳过“提交”识别后直接确认。
+      validatePasteTextBeforeConfirm: function () {
+        const text = (this.pasteText || '').trim();
+        if (!text) return;
+
+        const cleaned = this.cleanAddressText(text);
+        const parsed = this.simpleParseAddress(cleaned);
+        const finalLocation = this.activeTab === 'map'
+          ? {
+            province: this.selectedLocation.province || '',
+            city: this.selectedLocation.city || '',
+            district: this.selectedLocation.district || '',
+            street: this.selectedLocation.street || '',
+            streetNumber: this.selectedLocation.streetNumber || '',
+            address: this.selectedLocation.address || this.sheetAddressText || ''
+          }
+          : {
+            province: this.regionForm.province || '',
+            city: this.regionForm.city || '',
+            district: this.regionForm.district || '',
+            street: '',
+            streetNumber: '',
+            address: this.composeRegionFullAddress()
+          };
+
+        this.validateAddressRisk(cleaned, parsed, finalLocation);
+      },
+
       // 校验输入地址和地图识别结果是否存在省市区不一致等风险。
       validateAddressRisk: function (rawText, parsedInput, finalLocation) {
         let risks = [];
@@ -2988,10 +3016,15 @@
         let payload;
 
         if (this.activeTab === 'map') {
-          if (!this.selectedLocation.address && !this.sheetAddressText) {
+          if (!this.sheetAddressTitle || !this.sheetProviceCityDistrict) {
             this.showAlert('请先选择或识别地址');
             return;
           }
+          if (!this.sheetDoorNumber) {
+            this.showAlert('请填写门牌号');
+            return;
+          }
+          this.validatePasteTextBeforeConfirm();
           payload = this.buildMapPayload();
         } else {
           if (!this.regionDisplayText) {
@@ -3002,6 +3035,7 @@
             this.showAlert('请填写详细地址');
             return;
           }
+          this.validatePasteTextBeforeConfirm();
           payload = this.buildRegionPayload();
         }
 

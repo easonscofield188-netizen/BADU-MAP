@@ -1039,18 +1039,28 @@
     }
 
     .baidu-map-address-picker .confirm-dialog {
-      width: 100%;
-      max-width: 112vw;
+      width: 85.33vw;
+      max-width: 320px;
       background: #fff;
-      border-radius: 4.27vw;
+      border-radius: 3.2vw;
       overflow: hidden;
     }
 
     .baidu-map-address-picker .confirm-header {
-      padding: 4.27vw 4.27vw 2.13vw;
-      font-size: 4.8vw;
+      padding: 7.47vw 5.33vw 2.67vw;
+      font-size: 4vw;
+      line-height: 5.6vw;
       font-weight: bold;
-      color: #cf1322;
+      color: #111;
+      text-align: center;
+    }
+
+    .baidu-map-address-picker .confirm-body {
+      padding: 0 5.33vw 7.47vw;
+      font-size: 3.73vw;
+      line-height: 5.6vw;
+      color: #1f2937;
+      text-align: left;
     }
 
     .baidu-map-address-picker .confirm-list {
@@ -1075,7 +1085,7 @@
       border: none;
       background: #fff;
       font-size: 4vw;
-      
+      font-weight: 400;
     }
 
     .baidu-map-address-picker .confirm-btn + .confirm-btn {
@@ -1083,16 +1093,16 @@
     }
 
     .baidu-map-address-picker .confirm-btn.cancel {
-      color: #666;
+      color: #111;
     }
 
     .baidu-map-address-picker .confirm-btn.ok {
-      color: #ff4d4f;
-      font-weight: bold
+      color: #ff2f45;
+      font-weight: 400;
     }
 
     .baidu-map-address-picker .paste-confirm-dialog {
-      max-width: 300px;
+      max-width: 320px;
       border-radius: 10px;
     }
 
@@ -1105,8 +1115,8 @@
     }
 
     .baidu-map-address-picker .paste-confirm-body {
-      padding-left: 15px; 
-      padding-bottom: 15px;
+      padding: 0 20px 22px;
+      text-align: left;
     }
 
     .baidu-map-address-picker .paste-confirm-line + .paste-confirm-line {
@@ -1123,61 +1133,71 @@
     }
 
     .baidu-map-address-picker .paste-confirm-footer {
-      padding: 0 18px 18px;
       display: flex;
-      gap: 12px;
     }
 
     .baidu-map-address-picker .paste-confirm-footer .confirm-btn {
-      height: 40px;
-      border-radius: 4px;
+      height: 12.8vw;
+      border-radius: 0;
       border: none;
       font-size: 15px;
-      font-weight: bold;
+      font-weight: 400;
     }
 
     .baidu-map-address-picker .paste-confirm-footer .confirm-btn.cancel {
-      background: #f3f4f8;
-      color: #333;
+      background: #fff;
+      color: #111;
     }
 
     .baidu-map-address-picker .paste-confirm-footer .confirm-btn.ok {
-      background: linear-gradient(180deg, #ff6666 0%, #ff3434 100%);
-      color: #fff;
+      background: #fff;
+      color: #ff2f45;
     }
 
     .baidu-map-address-picker .vant-alert-dialog {
+      width: 85.33vw;
       max-width: 320px;
-      border-radius: 16px;
+      border-radius: 3.2vw;
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      background: #fff;
+      box-shadow: none;
     }
 
     .baidu-map-address-picker .vant-alert-header {
-      padding: 20px 20px 8px;
-      font-size: 20px;
-      line-height: 28px;
-      color: #323233;
+      padding: 7.47vw 5.33vw 2.67vw;
+      font-size: 4vw;
+      line-height: 5.6vw;
+      color: #111;
       font-weight: bold;
       word-break: break-all;
       text-align: center;
     }
 
+    .baidu-map-address-picker .vant-alert-body {
+      padding: 0 8vw 7.2vw;
+      min-height: 11.2vw;
+      font-size: 3.73vw;
+      line-height: 5.6vw;
+      color: #1f2937;
+      text-align: center;
+      word-break: break-all;
+    }
+
     .baidu-map-address-picker .vant-alert-footer {
-      padding: 12px;
       display: flex;
       justify-content: center;
+      border-top: 0.27vw solid #f0f0f0;
     }
 
     .baidu-map-address-picker .vant-alert-btn {
-      min-width: 88px;
-      height: 40px;
-      padding: 0 20px;
-      border-radius: 10px;
-      background: linear-gradient(180deg, #ff6767 0%, #ff3b30 100%);
-      color: #fff;
-      font-size: 16px;
-      font-weight: bold;
+      width: 100%;
+      height: 12.8vw;
+      padding: 0;
+      border-radius: 0;
+      background: #fff;
+      color: #ff2f45;
+      font-size: 4vw;
+      font-weight: 500;
       border: none;
     }
 
