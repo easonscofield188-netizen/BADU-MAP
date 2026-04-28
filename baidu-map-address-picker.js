@@ -123,7 +123,7 @@
               <template v-if="activeTab === 'map'">
                 <div :class="['line-row', sheetAddressTitle && sheetProviceCityDistrict ? 'align-items-start' : '']">
                   <div class="line-label">地址</div>
-                  <div class="line-main" style="display:flex; align-items:center; gap:10px;">
+                  <div class="line-main" style="display:flex; align-items:center; gap:2.67vw;">
                     <div style="flex:1; min-width:0;">
                       <div v-if="sheetAddressTitle && sheetProviceCityDistrict" class="address-title">
                         <span>{{ sheetAddressTitle }}</span>
@@ -475,8 +475,8 @@
                 </div>
               </div>
 
-              <div class="region-hot-block" style="padding-top:10px; padding-bottom:0;">
-                <div class="region-block-title" style="margin-bottom:8px;">选择省份/地区</div>
+              <div class="region-hot-block" style="padding-top:2.67vw; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:2.13vw;">选择省份/地区</div>
               </div>
 
               <div class="region-list-wrap" ref="provinceListWrap" @scroll="handleRegionListScroll('province')">
@@ -512,8 +512,8 @@
             </template>
 
             <template v-if="regionStep === 'city'">
-              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
-                <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
+              <div class="region-hot-block" style="padding-top:3vw; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:2.13vw;">请选择</div>
               </div>
 
               <div class="region-list-wrap" ref="cityListWrap" @scroll="handleRegionListScroll('city')">
@@ -549,8 +549,8 @@
             </template>
 
             <template v-if="regionStep === 'district'">
-              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
-                <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
+              <div class="region-hot-block" style="padding-top:3vw; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:2.13vw;">请选择区县</div>
               </div>
 
               <div class="region-list-wrap" ref="districtListWrap" @scroll="handleRegionListScroll('district')">
@@ -603,8 +603,8 @@
               </template>
             </div>
             <template v-if="regionStep === 'province'">
-              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
-                <div class="region-block-title" style="margin-bottom:8px;">选择地区</div>
+              <div class="region-hot-block" style="padding-top:3vw; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:2.13vw;">选择地区</div>
               </div>
 
               <div class="region-list-wrap" ref="overseaProvinceListWrap" @scroll="handleRegionListScroll('overseaProvince')">
@@ -640,8 +640,8 @@
             </template>
 
             <template v-if="regionStep === 'city'">
-              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
-                <div class="region-block-title" style="margin-bottom:8px;">请选择</div>
+              <div class="region-hot-block" style="padding-top:3vw; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:2.13vw;">请选择</div>
               </div>
 
               <div class="region-list-wrap" ref="cityListWrap" @scroll="handleRegionListScroll('city')">
@@ -677,8 +677,8 @@
             </template>
 
             <template v-if="regionStep === 'district'">
-              <div class="region-hot-block" style="padding-top:12px; padding-bottom:0;">
-                <div class="region-block-title" style="margin-bottom:8px;">请选择区县</div>
+              <div class="region-hot-block" style="padding-top:3vw; padding-bottom:0;">
+                <div class="region-block-title" style="margin-bottom:2.13vw;">请选择区县</div>
               </div>
 
               <div class="region-list-wrap" ref="districtListWrap" @scroll="handleRegionListScroll('district')">
@@ -1686,8 +1686,8 @@
 
           this.currentLocationMarkerStyle = {
             display: 'block',
-            left: pixel.x + 'px',
-            top: pixel.y + 'px'
+            left: (pixel.x / window.innerWidth * 100).toFixed(2) + 'vw',
+            top: (pixel.y / window.innerWidth * 100).toFixed(2) + 'vw'
           };
         } catch (e) {
           this.currentLocationMarkerStyle.display = 'none';
