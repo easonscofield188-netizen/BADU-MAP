@@ -2354,6 +2354,20 @@
         return score;
       },
 
+      // 过滤不适合作为邮寄地址主地点的交通辅助点或过细子机构。
+      isUnsuitableMailPoiTitle: function (title) {
+        const text = title || '';
+        return /上下客|停靠点|上车点|下车点|网约车|出租车|停车场|停车点|入口|出口|出入口|充电站|洗手间|卫生间|服务部|营业部|分公司|办事处/.test(text);
+      },
+
+      // 邮寄地址只保留主体地点名称，去掉营业部、停靠点等细分场景后缀。
+      normalizeMailPoiTitle: function (title) {
+        let text = title || '';
+        text = text.replace(/(?:浙江|北京|上海|天津|重庆|广东|江苏|山东|河南|河北|湖南|湖北|四川|福建|安徽|江西|陕西|山西|辽宁|吉林|黑龙江|云南|贵州|广西|海南|甘肃|青海|宁夏|新疆|西藏|内蒙古).*?(?:分公司|营业部|服务部|办事处).*$/g, '');
+        text = text.replace(/(?:网约车)?上下客停靠点.*$/g, '');
+        return text || title || '';
+      },
+
       // 从地址文本中按地区数据源反查区县名称，作为百度 POI 字段缺失时的兜底。
       inferDistrictFromAddressText: function (provinceName, cityName, addressText) {
         const text = addressText || '';
@@ -2789,7 +2803,7 @@
           return;
         }
 
-        this.searchAddressByText(cleaned, function (result) {
+        this.searchAddressByText(this.buildPoiSearchKeyword(cleaned, parsed), function (result) {
           let finalLocation;
           if (result) {
             // 地图搜索结果优先提供坐标和标准省市区，正则解析结果用于补足门牌、标题等细节。
@@ -2898,7 +2912,7 @@
         const fallbackCity = this.currentLocation && this.currentLocation.city ? this.currentLocation.city : '';
         const fallbackDistrict = this.currentLocation && this.currentLocation.district ? this.currentLocation.district : '';
 
-        this.searchAddressByText(cleaned, function (result) {
+        this.searchAddressByText(this.buildPoiSearchKeyword(cleaned, parsed), function (result) {
           const province = (result && result.province) || parsed.province || fallbackProvince || '';
           const city = (result && result.city) || parsed.city || fallbackCity || '';
           let district = parsed.district || '';
@@ -2927,13 +2941,24 @@
       // 根据解析结果和地图搜索结果生成展示标题。
       buildSearchDisplayTitle: function (parsed, result) {
         const parsedName = parsed && parsed.name ? parsed.name : '';
-        const resultTitle = result && result.title ? result.title : '';
+        const resultTitle = result && result.title ? this.normalizeMailPoiTitle(result.title) : '';
 
-        if (parsedName && parsedName.length >= resultTitle.length) {
-          return parsedName;
+        if (resultTitle && resultTitle.length > 2) {
+          return resultTitle;
         }
 
-        return resultTitle || parsedName || '已识别地址';
+        return this.removeDoorNumberFromDetailAddress(parsedName, this.extractDoorNumber(parsed)) || '已识别地址';
+      },
+
+      // 生成 POI 检索关键词时去掉楼栋、单元和房号，避免过细门牌影响百度返回完整地点名称。
+      buildPoiSearchKeyword: function (cleaned, parsed) {
+        const doorNumber = this.extractDoorNumber(parsed);
+        let keyword = cleaned || '';
+        if (doorNumber && keyword.slice(-doorNumber.length) === doorNumber) {
+          keyword = keyword.slice(0, -doorNumber.length);
+        }
+        keyword = keyword.replace(/(?:\d+号)?\d+[栋幢](?:\d+单元)?$/g, '');
+        return keyword || cleaned || '';
       },
 
       // 构造粘贴识别后的候选地址对象。
@@ -2975,6 +3000,17 @@
         if (!door) return detail;
         if (detail.indexOf(door) > -1) return detail;
         return detail + door;
+      },
+
+      // 去掉地址标题末尾的楼栋、单元、房号，地图“地址”区域只展示地点名称。
+      removeDoorNumberFromDetailAddress: function (detailAddress, doorNumber) {
+        let detail = detailAddress || '';
+        const door = doorNumber || '';
+        if (!door) return detail;
+        if (detail.slice(-door.length) === door) {
+          detail = detail.slice(0, -door.length);
+        }
+        return detail.replace(/(?:\d+号)?\d+[栋幢](?:\d+单元)?$/g, '');
       },
 
       // 从原始文本和地图结果中提取去掉省市区后的详细地址。
@@ -3050,7 +3086,16 @@
         }
 
         if (candidate.activeTab === 'map') {
-          this.applyMapLocationToSheet(candidate.finalLocation || {});
+          const mapLocation = Object.assign({}, candidate.finalLocation || {});
+          mapLocation.title = this.removeDoorNumberFromDetailAddress(
+            mapLocation.title || candidate.detailAddress || '',
+            candidate.doorNumber || ''
+          );
+          mapLocation.name = this.removeDoorNumberFromDetailAddress(
+            mapLocation.name || mapLocation.title || '',
+            candidate.doorNumber || ''
+          );
+          this.applyMapLocationToSheet(mapLocation);
           this.sheetDoorNumber = candidate.doorNumber || '';
           this.activeTab = 'map';
         } else {
@@ -3155,17 +3200,49 @@
         const mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
 
         const localSearch = new BMapGL.LocalSearch(mapContext, {
-          pageCapacity: 1,
+          pageCapacity: 6,
           onSearchComplete: function (results) {
             if (!results || localSearch.getStatus() !== 0 || results.getCurrentNumPois() === 0) {
               callback(null);
               return;
             }
 
-            const poi = results.getPoi(0);
+            let poi = null;
+            const count = results.getCurrentNumPois();
+            for (let i = 0; i < count; i++) {
+              const currentPoi = results.getPoi(i);
+              if (!currentPoi || !currentPoi.point) continue;
+              const currentRawTitle = currentPoi.title || '';
+              if (self.isUnsuitableMailPoiTitle(currentRawTitle)) continue;
+              if (!poi) {
+                poi = currentPoi;
+                continue;
+              }
+
+              const currentTitle = self.normalizeAddressCompareText(currentRawTitle);
+              const selectedTitle = self.normalizeAddressCompareText(poi.title || '');
+              if (
+                currentTitle
+                && selectedTitle
+                && currentTitle.indexOf(selectedTitle) > -1
+                && currentTitle.length > selectedTitle.length
+              ) {
+                poi = currentPoi;
+              }
+            }
+
             if (!poi || !poi.point) {
-              callback(null);
-              return;
+              for (let i = 0; i < count; i++) {
+                const fallbackPoi = results.getPoi(i);
+                if (fallbackPoi && fallbackPoi.point) {
+                  poi = fallbackPoi;
+                  break;
+                }
+              }
+              if (!poi || !poi.point) {
+                callback(null);
+                return;
+              }
             }
 
             if (!self.geocoder) {
@@ -3270,7 +3347,9 @@
       // 生成地图选址模式最终提交给父组件的数据。
       buildMapPayload: function () {
         const title = this.selectedLocation.title || this.sheetAddressTitle || '';
-        const detailAddress = title + (this.sheetDoorNumber || '');
+        const doorNumber = this.sheetDoorNumber || '';
+        const cleanTitle = this.removeDoorNumberFromDetailAddress(title, doorNumber);
+        const detailAddress = cleanTitle + doorNumber;
         const province = this.selectedLocation.province || '';
         const city = this.getDirectAdminCityName(province, this.selectedLocation.city || '');
         const district = this.selectedLocation.district || '';
@@ -3284,7 +3363,7 @@
         this.form.city = city;
         this.form.district = district;
         this.form.street = this.selectedLocation.street || '';
-        this.form.streetNumber = this.selectedLocation.streetNumber || '';
+        this.form.streetNumber = doorNumber || this.selectedLocation.streetNumber || '';
         this.form.fullAddress = this.selectedLocation.address || this.sheetAddressText || '';
         this.form.lng = this.selectedLocation.point ? (this.selectedLocation.point.lng || '') : '';
         this.form.lat = this.selectedLocation.point ? (this.selectedLocation.point.lat || '') : '';
@@ -3305,7 +3384,7 @@
           district_code: codeParts.district_code,
           region_code: codeParts.region_code,
           region_codes: codeParts.region_codes,
-          title: title,
+          title: cleanTitle,
           hasRisk: this.addressRiskList.length > 0,
           riskConfirmed: this.riskConfirmed,
           riskMessages: this.addressRiskList.slice()
