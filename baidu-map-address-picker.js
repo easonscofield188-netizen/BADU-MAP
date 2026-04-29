@@ -2959,12 +2959,22 @@
       getPasteConfirmDetailAddress: function (cleaned, parsed, finalLocation) {
         const title = finalLocation && (finalLocation.title || finalLocation.name) ? (finalLocation.title || finalLocation.name) : '';
         const fallback = this.extractDetailAddress(cleaned, parsed, finalLocation);
+        const doorNumber = this.extractDoorNumber(parsed);
 
         if (title && title.length > 2) {
-          return title;
+          return this.mergeDetailAddressWithDoorNumber(title, doorNumber);
         }
 
-        return fallback;
+        return this.mergeDetailAddressWithDoorNumber(fallback, doorNumber);
+      },
+
+      // 把地图识别出的标准 POI 名称和用户原文里的楼栋、单元、房号合并，避免回填时丢失门牌信息。
+      mergeDetailAddressWithDoorNumber: function (detailAddress, doorNumber) {
+        const detail = detailAddress || '';
+        const door = doorNumber || '';
+        if (!door) return detail;
+        if (detail.indexOf(door) > -1) return detail;
+        return detail + door;
       },
 
       // 从原始文本和地图结果中提取去掉省市区后的详细地址。
@@ -3002,7 +3012,7 @@
         }
 
         const detail = parsed.detail || '';
-        const tailNumberMatch = detail.match(/(\d{2,}[A-Za-z]?|\d+[甲乙丙丁])$/);
+        const tailNumberMatch = detail.match(/((?:\d+号)?\d+[栋幢](?:\d+单元)?(?:\d+[A-Za-z]?(?:室|号|房)?)?|(?:\d+单元)?\d+[A-Za-z]?(?:室|号|房)|\d{2,}[A-Za-z]?|\d+[甲乙丙丁])$/);
         if (tailNumberMatch) {
           return tailNumberMatch[0];
         }
@@ -3125,7 +3135,7 @@
         const streetMatch = source.match(/([^省市区县]+(?:路|街|道|巷))/);
         if (streetMatch) result.street = streetMatch[0];
 
-        const streetNumberMatch = source.match(/(\d+号|\d+弄|\d+栋|\d+幢|\d+单元|\d+室|[A-Za-z0-9\-]+室|\b\d{2,}\b)$/);
+        const streetNumberMatch = source.match(/((?:\d+号)?\d+[栋幢](?:\d+单元)?(?:\d+[A-Za-z]?(?:室|号|房)?)?|(?:\d+单元)?\d+[A-Za-z]?(?:室|号|房)|\d+号|\d+弄|[A-Za-z0-9\-]+室|\b\d{2,}\b)$/);
         if (streetNumberMatch) result.streetNumber = streetNumberMatch[0];
 
         result.name = remain.trim().slice(0, 20);
