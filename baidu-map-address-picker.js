@@ -257,7 +257,9 @@
       </div>
 
       <div class="sheet-footer">
-        <button class="btn-primary" @click="confirmSheetAddress">确认</button>
+        <button class="btn-primary" :disabled="isCheckingRegionDetail" @click="confirmSheetAddress">
+          {{ isCheckingRegionDetail ? '校验中...' : '确认' }}
+        </button>
       </div>
     </div>
   </transition>
@@ -892,6 +894,7 @@
         regionSuggestTimer: null, // 地区选址详细地址联想防抖定时器。
         regionDetailFocused: false, // 地区选址详细地址输入框是否聚焦。
         regionDetailBlurTimer: null, // 地区选址详细地址输入框失焦延迟定时器。
+        isCheckingRegionDetail: false, // 确认地区选址时是否正在校验详细地址归属。
 
         regionSelectorTab: 'domestic', // 地区选择器当前标签：domestic 境内，oversea 港澳台。
         regionStep: 'province', // 地区选择器当前步骤：province、city 或 district。
@@ -1470,6 +1473,152 @@
         if (!item) return;
         this.regionForm.detailAddress = item.title || item.name || this.regionForm.detailAddress;
         this.clearRegionSuggest();
+      },
+
+      // 确认地区选址前，用省市和详细地址重新检索真实 POI，判断区县是否和用户选择一致。
+      validateRegionDetailAddressBeforeConfirm: function (done) {
+        const self = this;
+        const detailAddress = (this.regionForm.detailAddress || '').trim();
+        if (!detailAddress) {
+          done();
+          return;
+        }
+
+        this.initBaseServices();
+        if (!global.BMapGL || !BMapGL.LocalSearch) {
+          done();
+          return;
+        }
+
+        const province = this.regionForm.province || '';
+        const city = this.getDirectAdminCityName(province, this.regionForm.city || '');
+        const district = this.regionForm.district || '';
+        const searchCity = city && city !== '市辖区' ? city : '';
+        const keyword = [province, searchCity, detailAddress].filter(Boolean).join('');
+        const selectedRegion = this.getRegionParts(province, city, district).join(' ');
+
+        if (!keyword) {
+          done();
+          return;
+        }
+
+        this.isCheckingRegionDetail = true;
+        let validationDone = false;
+        const finishValidation = function () {
+          if (validationDone) return;
+          validationDone = true;
+          self.isCheckingRegionDetail = false;
+          done();
+        };
+        const validationTimer = setTimeout(function () {
+          self.addressRiskList.push('详细地址校验超时，请核对所在地区后再继续');
+          self.addressRiskText = self.addressRiskList.join('；');
+          finishValidation();
+        }, 6000);
+
+        try {
+          const mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
+          const localSearch = new BMapGL.LocalSearch(mapContext, {
+            pageCapacity: 8,
+            onSearchComplete: function (results) {
+              if (validationDone) return;
+              clearTimeout(validationTimer);
+
+              if (!results || localSearch.getStatus() !== 0 || !results.getCurrentNumPois()) {
+                self.addressRiskList.push('无法确认详细地址是否属于当前所在地区，请核对后再继续');
+                self.addressRiskText = self.addressRiskList.join('；');
+                finishValidation();
+                return;
+              }
+
+              let matchedPoi = null;
+              let fallbackPoi = null;
+              let bestScore = 0;
+              const count = results.getCurrentNumPois();
+              for (let i = 0; i < count; i++) {
+                const poi = results.getPoi(i);
+                if (!poi) continue;
+                const matchScore = self.getAddressTextMatchScore(detailAddress, poi.title || poi.name || '');
+
+                // 先找名称和输入最接近的 POI，避免同名/相近地址被排在前面造成漏判。
+                if (poi.point && matchScore > bestScore) {
+                  bestScore = matchScore;
+                  matchedPoi = poi;
+                }
+                if (!fallbackPoi && poi.point && (poi.province || poi.city || poi.district)) {
+                  fallbackPoi = poi;
+                }
+              }
+              matchedPoi = matchedPoi || fallbackPoi;
+
+              if (!matchedPoi) {
+                self.addressRiskList.push('无法确认详细地址是否属于当前所在地区，请核对后再继续');
+                self.addressRiskText = self.addressRiskList.join('；');
+                finishValidation();
+                return;
+              }
+
+              const compareRegion = function (location) {
+                const realProvince = self.formatProvinceName(location.province || '');
+                const realCity = self.getDirectAdminCityName(realProvince, location.city || '');
+                const realDistrict = location.district || self.inferDistrictFromAddressText(
+                  realProvince || province,
+                  realCity || city,
+                  location.address || ''
+                );
+                const realRegion = self.getRegionParts(realProvince, realCity, realDistrict).join(' ');
+
+                if (
+                  (province && realProvince && province !== realProvince)
+                  || (city && realCity && city !== realCity)
+                  || (district && realDistrict && district !== realDistrict)
+                ) {
+                  self.addressRiskList.push('详细地址定位到“' + realRegion + '”，与当前选择的“' + selectedRegion + '”不一致');
+                  self.addressRiskText = self.addressRiskList.join('；');
+                }
+
+                finishValidation();
+              };
+
+              if (matchedPoi.point && self.geocoder && typeof self.geocoder.getLocation === 'function') {
+                const reverseTimer = setTimeout(function () {
+                  compareRegion({
+                    province: matchedPoi.province || '',
+                    city: matchedPoi.city || '',
+                    district: matchedPoi.district || '',
+                    address: matchedPoi.address || ''
+                  });
+                }, 3000);
+
+                self.geocoder.getLocation(matchedPoi.point, function (rs) {
+                  clearTimeout(reverseTimer);
+                  const ac = rs && rs.addressComponents ? rs.addressComponents : {};
+                  compareRegion({
+                    province: ac.province || matchedPoi.province || '',
+                    city: ac.city || matchedPoi.city || '',
+                    district: ac.district || matchedPoi.district || '',
+                    address: (rs && rs.address) || matchedPoi.address || ''
+                  });
+                });
+                return;
+              }
+
+              compareRegion({
+                province: matchedPoi.province || '',
+                city: matchedPoi.city || '',
+                district: matchedPoi.district || '',
+                address: matchedPoi.address || ''
+              });
+            }
+          });
+
+          localSearch.search(keyword);
+        } catch (error) {
+          clearTimeout(validationTimer);
+          self.addressRiskList.push('详细地址校验失败，请核对所在地区后再继续');
+          self.addressRiskText = self.addressRiskList.join('；');
+          finishValidation();
+        }
       },
 
       // 初始化百度地图基础服务，例如定位和逆地址解析。
@@ -2172,6 +2321,54 @@
       // 转义正则特殊字符，避免关键词生成正则时报错。
       escapeReg: function (str) {
         return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      },
+
+      // 归一化地址文本，方便比较用户输入的详细地址和百度 POI 标题是否指向同一地点。
+      normalizeAddressCompareText: function (text) {
+        return String(text || '')
+          .replace(/[（(].*?[）)]/g, '')
+          .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '')
+          .toLowerCase();
+      },
+
+      // 计算两个地址名称的粗略相似度，用于从百度 POI 结果里选出最接近用户输入的地点。
+      getAddressTextMatchScore: function (sourceText, targetText) {
+        const source = this.normalizeAddressCompareText(sourceText);
+        const target = this.normalizeAddressCompareText(targetText);
+        if (!source || !target) return 0;
+        if (source === target) return 100;
+        if (source.indexOf(target) > -1 || target.indexOf(source) > -1) {
+          return Math.min(source.length, target.length) + 20;
+        }
+
+        let score = 0;
+        let cursor = 0;
+        for (let i = 0; i < source.length; i++) {
+          const index = target.indexOf(source.charAt(i), cursor);
+          if (index > -1) {
+            score++;
+            cursor = index + 1;
+          }
+        }
+
+        return score;
+      },
+
+      // 从地址文本中按地区数据源反查区县名称，作为百度 POI 字段缺失时的兜底。
+      inferDistrictFromAddressText: function (provinceName, cityName, addressText) {
+        const text = addressText || '';
+        if (!text) return '';
+
+        const cityNode = this.findCityNode(provinceName, cityName);
+        const districtList = cityNode && cityNode.children ? cityNode.children : [];
+        for (let i = 0; i < districtList.length; i++) {
+          const district = districtList[i] && districtList[i].text ? districtList[i].text : '';
+          if (district && text.indexOf(district) > -1) {
+            return district;
+          }
+        }
+
+        return '';
       },
 
       // 把省份简称补全成标准名称，例如北京转为北京市。
@@ -3166,7 +3363,16 @@
 
       // 点击确认按钮时校验表单，并决定是否直接提交或弹出风险确认。
       confirmSheetAddress: function () {
+        const self = this;
         let payload;
+
+        if (this.isCheckingRegionDetail) {
+          return;
+        }
+
+        this.addressRiskList = [];
+        this.addressRiskText = '';
+        this.riskConfirmed = false;
 
         if (this.activeTab === 'map') {
           if (!this.sheetAddressTitle || !this.sheetProviceCityDistrict) {
@@ -3179,6 +3385,7 @@
           }
           this.validatePasteTextBeforeConfirm();
           payload = this.buildMapPayload();
+          this.finishConfirmPayload(payload);
         } else {
           if (!this.regionDisplayText) {
             this.showAlert('请先选择所在地区');
@@ -3189,9 +3396,15 @@
             return;
           }
           this.validatePasteTextBeforeConfirm();
-          payload = this.buildRegionPayload();
+          this.validateRegionDetailAddressBeforeConfirm(function () {
+            payload = self.buildRegionPayload();
+            self.finishConfirmPayload(payload);
+          });
         }
+      },
 
+      // 根据风险校验结果决定直接提交或打开风险确认弹窗。
+      finishConfirmPayload: function (payload) {
         if (this.addressRiskList.length) {
           this.pendingPayload = payload;
           this.showRiskConfirm = true;
