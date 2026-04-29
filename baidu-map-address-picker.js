@@ -1090,7 +1090,7 @@
             label: this.regionTemp.province
           });
         }
-        if (this.regionTemp.city && this.regionTemp.city !== '市辖区') {
+        if (this.regionTemp.city) {
           list.push({
             step: 'city',
             label: this.regionTemp.city
@@ -1821,7 +1821,11 @@
 
         this.sheetAddressTitle = title || name || '';
         this.sheetAddressText = address;
-        this.sheetProviceCityDistrict = [this.selectedLocation.province, city, district].filter(Boolean).join(' ');
+        this.sheetProviceCityDistrict = this.getRegionParts(
+          this.selectedLocation.province,
+          city,
+          district
+        ).join(' ');
       },
 
       // 打开地图选址全屏页，并初始化地图。
@@ -2201,18 +2205,39 @@
         return value + '省';
       },
 
+      // 判断省级节点是否包含“市辖区”这一层，用于把地图返回的“北京市/北京市”展示成“北京市/市辖区”。
+      getDirectAdminCityName: function (provinceName, cityName) {
+        const fullProvince = this.formatProvinceName(provinceName || '');
+        const provinceNode = this.findProvinceNode(fullProvince);
+        const children = provinceNode && provinceNode.children ? provinceNode.children : [];
+        const normalizedCity = cityName || '';
+        const hasMunicipalDistrict = children.some(function (item) {
+          return item && item.text === '市辖区';
+        });
+
+        if (!hasMunicipalDistrict) {
+          return normalizedCity;
+        }
+
+        if (!normalizedCity || normalizedCity === fullProvince || normalizedCity === provinceNode.text) {
+          return '市辖区';
+        }
+
+        return normalizedCity;
+      },
+
       // 把省、市、区整理成展示用的地址层级数组。
       getRegionParts: function (province, city, district) {
         let parts = [];
         const fullProvince = this.formatProvinceName(province || '');
-        const cityName = city || '';
+        const cityName = this.getDirectAdminCityName(fullProvince, city || '');
         const districtName = district || '';
 
         if (fullProvince) {
           parts.push(fullProvince);
         }
 
-        if (cityName && cityName !== fullProvince && cityName !== '市辖区') {
+        if (cityName) {
           parts.push(cityName);
         }
 
@@ -3005,7 +3030,9 @@
         const inputDistrict = parsedInput && parsedInput.district ? parsedInput.district : '';
 
         const finalProvince = finalLocation && finalLocation.province ? this.formatProvinceName(finalLocation.province) : '';
-        const finalCity = finalLocation && finalLocation.city ? finalLocation.city : '';
+        const finalCity = finalLocation && finalLocation.city
+          ? this.getDirectAdminCityName(finalProvince, finalLocation.city)
+          : '';
         const finalDistrict = finalLocation && finalLocation.district ? finalLocation.district : '';
 
         // 风险校验只提示用户，不阻断提交；用户在风险弹窗确认后仍可继续使用该地址。
@@ -3037,15 +3064,18 @@
       buildMapPayload: function () {
         const title = this.selectedLocation.title || this.sheetAddressTitle || '';
         const detailAddress = title + (this.sheetDoorNumber || '');
+        const province = this.selectedLocation.province || '';
+        const city = this.getDirectAdminCityName(province, this.selectedLocation.city || '');
+        const district = this.selectedLocation.district || '';
         const codeParts = this.getRegionCodeParts(
-          this.selectedLocation.province || '',
-          this.selectedLocation.city || '',
-          this.selectedLocation.district || ''
+          province,
+          city,
+          district
         );
 
-        this.form.province = this.selectedLocation.province || '';
-        this.form.city = this.selectedLocation.city || '';
-        this.form.district = this.selectedLocation.district || '';
+        this.form.province = province;
+        this.form.city = city;
+        this.form.district = district;
         this.form.street = this.selectedLocation.street || '';
         this.form.streetNumber = this.selectedLocation.streetNumber || '';
         this.form.fullAddress = this.selectedLocation.address || this.sheetAddressText || '';
@@ -3077,15 +3107,18 @@
 
       // 生成地区选址模式最终提交给父组件的数据。
       buildRegionPayload: function () {
+        const province = this.regionForm.province || '';
+        const city = this.getDirectAdminCityName(province, this.regionForm.city || '');
+        const district = this.regionForm.district || '';
         const codeParts = this.getRegionCodeParts(
-          this.regionForm.province || '',
-          this.regionForm.city || '',
-          this.regionForm.district || ''
+          province,
+          city,
+          district
         );
 
-        this.form.province = this.regionForm.province || '';
-        this.form.city = this.regionForm.city || '';
-        this.form.district = this.regionForm.district || '';
+        this.form.province = province;
+        this.form.city = city;
+        this.form.district = district;
         this.form.street = '';
         this.form.streetNumber = '';
         this.form.lng = '';
