@@ -49,10 +49,8 @@
       flex-direction: column;
       background: #f6f6f6;
       border-radius: 4.27vw 4.27vw 0 0;
-      overflow: hidden;
-      max-height: 90vh;
       overscroll-behavior: contain;
-      height: 140vw;
+      height: 145vw;
     }
 
     .baidu-map-address-picker .sheet-header {
@@ -76,7 +74,7 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      margin: 5.33vw 2.67vw 0 2.67vw;
+      margin: 4vw 2.67vw 0 2.67vw;
     }
 
     .baidu-map-address-picker .sheet-close {
@@ -220,6 +218,13 @@
       line-height: 1.4;
     }
 
+    .baidu-map-address-picker .location-title-row {
+      display: flex;
+      align-items: center;
+      gap: 2.13vw;
+      min-width: 0;
+    }
+
     .baidu-map-address-picker .location-address {
       margin-top: 1.07vw;
       font-size: 3.47vw;
@@ -237,8 +242,33 @@
       background: #fff;
       color: #333;
       font-size: 3.73vw;
-      
-      margin-left: 2.67vw;
+    }
+
+    .baidu-map-address-picker .btn-relocate {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 6.4vw;
+      height: 6.4vw;
+      flex-shrink: 0;
+      border: none;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      appearance: none;
+      -webkit-appearance: none;
+      font-size: 0;
+      line-height: 0;
+    }
+
+    .baidu-map-address-picker .relocate-icon {
+      display: block;
+      width: 5.87vw;
+      height: 5.87vw;
+    }
+
+    .baidu-map-address-picker .btn-relocate:disabled {
+      opacity: 0.65;
     }
 
     .baidu-map-address-picker .door-input {

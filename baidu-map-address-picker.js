@@ -140,7 +140,17 @@
                   <div class="line-main">
                     <div class="location-box">
                       <div class="location-left">
-                        <div class="location-name">{{ currentLocation.name || '定位中...' }}</div>
+                        <div class="location-title-row">
+                          <div class="location-name">{{ currentLocation.name || '定位中...' }}</div>
+                          <button
+                            class="btn-relocate"
+                            @click="refreshCurrentLocation"
+                            :disabled="isLocatingCurrent"
+                            aria-label="重新定位"
+                          >
+                            <img class="relocate-icon" src="./refresh.png" alt="" />
+                          </button>
+                        </div>
                         <div class="location-address">{{ currentLocation.address || '正在获取当前位置' }}</div>
                       </div>
                       <button class="btn-use" @click="useCurrentLocation">使用</button>
@@ -790,6 +800,7 @@
         showPasteBoard: false, // 是否展开地址粘贴板。
         // 操作状态：用于控制加载中、动画中、拖拽中等临时 UI 状态。
         isParsingPaste: false, // 是否正在解析粘贴的地址文本。
+        isLocatingCurrent: false, // 是否正在重新获取当前位置。
         isMarkerBouncing: false, // 地图中心标记是否正在播放跳动动画。
         isPickerMapDragging: false, // 用户是否正在拖动地图。
         markerBounceTimer: null, // 地图中心标记跳动动画定时器。
@@ -1699,7 +1710,9 @@
         const self = this;
         if (!this.geolocation) return;
 
+        this.isLocatingCurrent = true;
         this.geolocation.getCurrentPosition(function (r) {
+          self.isLocatingCurrent = false;
           if (this.getStatus && this.getStatus() === 0 && r && r.point) {
             self.reversePointToAddress(r.point, function (data) {
               self.currentLocation = data;
@@ -1717,6 +1730,29 @@
         }, {
           enableHighAccuracy: true
         });
+      },
+
+      // 用户手动点击重新定位时，清空旧定位展示并重新获取当前位置。
+      refreshCurrentLocation: function () {
+        this.initBaseServices();
+        if (!this.geolocation) {
+          this.showAlert('定位服务暂不可用');
+          return;
+        }
+
+        this.currentLocation = {
+          point: null,
+          title: '',
+          name: '',
+          address: '',
+          province: '',
+          city: '',
+          district: '',
+          street: '',
+          streetNumber: ''
+        };
+        this.currentLocationMarkerStyle.display = 'none';
+        this.fetchCurrentLocation();
       },
 
       // 把地图坐标反查成省市区、街道和详细地址。
@@ -2218,6 +2254,69 @@
         }
 
         return null;
+      },
+
+      // 根据省市区名称查找对应行政区编号，供提交给父组件使用。
+      getRegionCodeParts: function (provinceName, cityName, districtName) {
+        const province = this.formatProvinceName(provinceName || '');
+        const city = cityName || '';
+        const district = districtName || '';
+        const result = {
+          province_code: '',
+          city_code: '',
+          district_code: '',
+          region_code: '',
+          region_codes: []
+        };
+        const list = this.regionDataSource || [];
+        let provinceNode = null;
+        let cityNode = null;
+        let districtNode = null;
+
+        for (let i = 0; i < list.length; i++) {
+          if (list[i] && list[i].text === province) {
+            provinceNode = list[i];
+            break;
+          }
+        }
+
+        if (!provinceNode) return result;
+        result.province_code = String(provinceNode.value || '');
+
+        const cityList = provinceNode.children || [];
+        for (let i = 0; i < cityList.length; i++) {
+          const item = cityList[i];
+          if (!item) continue;
+          if (item.text === city || (item.text === '市辖区' && city === province)) {
+            cityNode = item;
+            break;
+          }
+        }
+
+        if (cityNode) {
+          result.city_code = String(cityNode.value || '');
+        }
+
+        const districtList = cityNode && cityNode.children ? cityNode.children : [];
+        for (let i = 0; i < districtList.length; i++) {
+          const item = districtList[i];
+          if (item && item.text === district) {
+            districtNode = item;
+            break;
+          }
+        }
+
+        if (districtNode) {
+          result.district_code = String(districtNode.value || '');
+        }
+
+        result.region_codes = [
+          result.province_code,
+          result.city_code,
+          result.district_code
+        ].filter(Boolean);
+        result.region_code = result.region_codes.join(',');
+        return result;
       },
 
       // 根据热门城市配置，找到对应省市区选择结果。
@@ -2938,6 +3037,11 @@
       buildMapPayload: function () {
         const title = this.selectedLocation.title || this.sheetAddressTitle || '';
         const detailAddress = title + (this.sheetDoorNumber || '');
+        const codeParts = this.getRegionCodeParts(
+          this.selectedLocation.province || '',
+          this.selectedLocation.city || '',
+          this.selectedLocation.district || ''
+        );
 
         this.form.province = this.selectedLocation.province || '';
         this.form.city = this.selectedLocation.city || '';
@@ -2959,6 +3063,11 @@
           fullAddress: this.form.fullAddress,
           lng: this.form.lng,
           lat: this.form.lat,
+          province_code: codeParts.province_code,
+          city_code: codeParts.city_code,
+          district_code: codeParts.district_code,
+          region_code: codeParts.region_code,
+          region_codes: codeParts.region_codes,
           title: title,
           hasRisk: this.addressRiskList.length > 0,
           riskConfirmed: this.riskConfirmed,
@@ -2968,6 +3077,12 @@
 
       // 生成地区选址模式最终提交给父组件的数据。
       buildRegionPayload: function () {
+        const codeParts = this.getRegionCodeParts(
+          this.regionForm.province || '',
+          this.regionForm.city || '',
+          this.regionForm.district || ''
+        );
+
         this.form.province = this.regionForm.province || '';
         this.form.city = this.regionForm.city || '';
         this.form.district = this.regionForm.district || '';
@@ -2988,6 +3103,11 @@
           fullAddress: this.form.fullAddress,
           lng: '',
           lat: '',
+          province_code: codeParts.province_code,
+          city_code: codeParts.city_code,
+          district_code: codeParts.district_code,
+          region_code: codeParts.region_code,
+          region_codes: codeParts.region_codes,
           title: this.regionDisplayText || '',
           hasRisk: this.addressRiskList.length > 0,
           riskConfirmed: this.riskConfirmed,
