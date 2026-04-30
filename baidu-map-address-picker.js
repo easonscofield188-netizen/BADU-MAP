@@ -3321,7 +3321,14 @@
 
         // 风险校验只提示用户，不阻断提交；用户在风险弹窗确认后仍可继续使用该地址。
         if (!inputProvince || !inputCity || !inputDistrict) {
-          risks.push('输入地址中的省、市、区信息可能不完整');
+          risks.push(this.buildRegionCompletionRiskText({
+            inputProvince: inputProvince,
+            inputCity: inputCity,
+            inputDistrict: inputDistrict,
+            finalProvince: finalProvince,
+            finalCity: finalCity,
+            finalDistrict: finalDistrict
+          }));
         }
 
         if (inputProvince && finalProvince && this.formatProvinceName(inputProvince) !== finalProvince) {
@@ -3342,6 +3349,31 @@
 
         this.addressRiskList = risks;
         this.addressRiskText = risks.join('；');
+      },
+
+      // 生成省市区缺失时的友好提示，说明用户粘贴内容缺了什么、系统补全了什么。
+      buildRegionCompletionRiskText: function (data) {
+        const missing = [];
+        const completed = [];
+
+        if (!data.inputProvince) {
+          missing.push('省份');
+          if (data.finalProvince) completed.push('省份“' + data.finalProvince + '”');
+        }
+        if (!data.inputCity) {
+          missing.push('城市');
+          if (data.finalCity) completed.push('城市“' + data.finalCity + '”');
+        }
+        if (!data.inputDistrict) {
+          missing.push('区县');
+          if (data.finalDistrict) completed.push('区县“' + data.finalDistrict + '”');
+        }
+
+        if (completed.length) {
+          return '粘贴的地址缺少' + missing.join('、') + '信息，系统已为你补全' + completed.join('、') + '，请确认是否继续使用';
+        }
+
+        return '粘贴的地址缺少' + missing.join('、') + '信息，系统暂未能完整补全，请确认后继续使用';
       },
 
       // 生成地图选址模式最终提交给父组件的数据。
