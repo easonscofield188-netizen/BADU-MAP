@@ -1370,6 +1370,41 @@
         this.clearRegionSuggest();
       },
 
+      // 校验地址输入中的非法字符；命中后必须修改，不允许继续提交。
+      validateAddressInputChars: function (fieldName, value) {
+        const text = value || '';
+        if (!text) return true;
+
+        const invalidChars = this.getInvalidAddressChars(text);
+        if (!invalidChars.length) return true;
+
+        this.showAlert(fieldName + '包含非法字符“' + invalidChars.join('、') + '”，请删除后再继续');
+        return false;
+      },
+
+      // 找出地址中不适合作为邮寄地址内容的特殊字符。
+      getInvalidAddressChars: function (text) {
+        const invalidMap = {};
+        const source = String(text || '');
+        const invalidPattern = /[<>《》{}[\]|\\^`~@$%*=;；!?！？]/g;
+        let match;
+
+        while ((match = invalidPattern.exec(source)) !== null) {
+          invalidMap[match[0]] = true;
+        }
+
+        for (let i = 0; i < source.length; i++) {
+          const code = source.charCodeAt(i);
+          // UTF-16 高位代理通常表示 emoji 等补充平面字符，地址中不允许这类字符。
+          if (code >= 0xD800 && code <= 0xDBFF) {
+            invalidMap[source.charAt(i) + source.charAt(i + 1)] = true;
+            i++;
+          }
+        }
+
+        return Object.keys(invalidMap);
+      },
+
       // 监听详细地址输入，触发联想搜索或清空联想结果。
       onRegionDetailInput: function () {
         const self = this;
@@ -2775,6 +2810,10 @@
         }
 
         const cleaned = this.cleanAddressText(text);
+        if (!this.validateAddressInputChars('粘贴地址', cleaned)) {
+          this.isParsingPaste = false;
+          return;
+        }
         const parsed = this.simpleParseAddress(cleaned);
 
         // 如果粘贴内容只有省市区，就切到地区选址模式；这种场景没有具体 POI，不适合按地图点位回填。
@@ -3589,6 +3628,9 @@
             this.showAlert('请填写门牌号');
             return;
           }
+          if (!this.validateAddressInputChars('门牌号', this.sheetDoorNumber)) {
+            return;
+          }
           this.validatePasteTextBeforeConfirm();
           this.validateRedundantAddressParts();
           payload = this.buildMapPayload();
@@ -3600,6 +3642,9 @@
           }
           if (!this.regionForm.detailAddress) {
             this.showAlert('请填写详细地址');
+            return;
+          }
+          if (!this.validateAddressInputChars('详细地址', this.regionForm.detailAddress)) {
             return;
           }
           this.validatePasteTextBeforeConfirm();
