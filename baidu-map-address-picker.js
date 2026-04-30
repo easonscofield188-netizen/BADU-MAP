@@ -3376,6 +3376,91 @@
         return '粘贴的地址缺少' + missing.join('、') + '信息，系统暂未能完整补全，请确认后继续使用';
       },
 
+      // 追加风险提示，避免同一条提示重复出现。
+      appendAddressRisk: function (message) {
+        if (!message) return;
+        if (this.addressRiskList.indexOf(message) === -1) {
+          this.addressRiskList.push(message);
+          this.addressRiskText = this.addressRiskList.join('；');
+        }
+      },
+
+      // 检查用户填写的详细地址或门牌号中是否重复包含已选地址信息。
+      validateRedundantAddressParts: function () {
+        if (this.activeTab === 'map') {
+          this.validateMapDoorNumberRedundancy();
+          return;
+        }
+
+        this.validateRegionDetailRedundancy();
+      },
+
+      // 地图选址中，“门牌号”只应填写楼栋、单元、房号，不应重复填写地址名或省市区。
+      validateMapDoorNumberRedundancy: function () {
+        const doorNumber = this.sheetDoorNumber || '';
+        if (!doorNumber) return;
+
+        const redundantParts = [];
+        const title = this.removeDoorNumberFromDetailAddress(
+          this.selectedLocation.title || this.sheetAddressTitle || '',
+          doorNumber
+        );
+        const province = this.selectedLocation.province || '';
+        const city = this.getDirectAdminCityName(province, this.selectedLocation.city || '');
+        const district = this.selectedLocation.district || '';
+        const titleVariants = [title];
+        const shortCity = this.normalizeCityPickerName(city || '');
+        if (shortCity && title.indexOf(shortCity) === 0) {
+          titleVariants.push(title.slice(shortCity.length));
+        }
+
+        const duplicatedTitle = titleVariants.find(function (item) {
+          return item && item.length > 1 && doorNumber.indexOf(item) > -1;
+        });
+        if (duplicatedTitle) {
+          redundantParts.push('地址名称“' + duplicatedTitle + '”');
+        }
+
+        [
+          { label: '省份', value: province },
+          { label: '城市', value: city },
+          { label: '区县', value: district }
+        ].forEach(function (item) {
+          if (item.value && item.value !== '市辖区' && doorNumber.indexOf(item.value) > -1) {
+            redundantParts.push(item.label + '“' + item.value + '”');
+          }
+        });
+
+        if (redundantParts.length) {
+          this.appendAddressRisk('门牌号中重复包含' + redundantParts.join('、') + '，门牌号建议只填写楼栋、单元、房号等补充信息');
+        }
+      },
+
+      // 地区选址中，“详细地址”不应再次填写已经选择过的省市区。
+      validateRegionDetailRedundancy: function () {
+        const detailAddress = this.regionForm.detailAddress || '';
+        if (!detailAddress) return;
+
+        const redundantParts = [];
+        const province = this.regionForm.province || '';
+        const city = this.getDirectAdminCityName(province, this.regionForm.city || '');
+        const district = this.regionForm.district || '';
+
+        [
+          { label: '省份', value: province },
+          { label: '城市', value: city },
+          { label: '区县', value: district }
+        ].forEach(function (item) {
+          if (item.value && item.value !== '市辖区' && detailAddress.indexOf(item.value) > -1) {
+            redundantParts.push(item.label + '“' + item.value + '”');
+          }
+        });
+
+        if (redundantParts.length) {
+          this.appendAddressRisk('详细地址中重复包含已选所在地区：' + redundantParts.join('、') + '，建议删除冗余地区信息后再确认');
+        }
+      },
+
       // 生成地图选址模式最终提交给父组件的数据。
       buildMapPayload: function () {
         const title = this.selectedLocation.title || this.sheetAddressTitle || '';
@@ -3505,6 +3590,7 @@
             return;
           }
           this.validatePasteTextBeforeConfirm();
+          this.validateRedundantAddressParts();
           payload = this.buildMapPayload();
           this.finishConfirmPayload(payload);
         } else {
@@ -3517,6 +3603,7 @@
             return;
           }
           this.validatePasteTextBeforeConfirm();
+          this.validateRedundantAddressParts();
           this.validateRegionDetailAddressBeforeConfirm(function () {
             payload = self.buildRegionPayload();
             self.finishConfirmPayload(payload);
