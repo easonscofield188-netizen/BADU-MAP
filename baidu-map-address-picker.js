@@ -1405,6 +1405,17 @@
         return Object.keys(invalidMap);
       },
 
+      // 门牌号或详细地址必须包含常见门牌定位词，避免只填写地点名称导致地址过粗。
+      validateAddressRequiredUnit: function (fieldName, value) {
+        const text = value || '';
+        if (/[号室组弄巷栋房]/.test(text)) {
+          return true;
+        }
+
+        this.showAlert(fieldName + '至少须包含“号/室/组/弄/巷/栋/房”其中之一，请补充后再继续');
+        return false;
+      },
+
       // 监听详细地址输入，触发联想搜索或清空联想结果。
       onRegionDetailInput: function () {
         const self = this;
@@ -3631,6 +3642,9 @@
           if (!this.validateAddressInputChars('门牌号', this.sheetDoorNumber)) {
             return;
           }
+          if (!this.validateAddressRequiredUnit('门牌号', this.sheetDoorNumber)) {
+            return;
+          }
           this.validatePasteTextBeforeConfirm();
           this.validateRedundantAddressParts();
           payload = this.buildMapPayload();
@@ -3645,6 +3659,9 @@
             return;
           }
           if (!this.validateAddressInputChars('详细地址', this.regionForm.detailAddress)) {
+            return;
+          }
+          if (!this.validateAddressRequiredUnit('详细地址', this.regionForm.detailAddress)) {
             return;
           }
           this.validatePasteTextBeforeConfirm();
