@@ -3117,6 +3117,17 @@
         return detail.replace(/(?:\d+号)?\d+[栋幢](?:\d+单元)?$/g, '');
       },
 
+      // 只移除用户填写的完整门牌号后缀，保留 POI 名称中原本存在的楼栋信息。
+      removeExactDoorNumberSuffix: function (detailAddress, doorNumber) {
+        const detail = detailAddress || '';
+        const door = doorNumber || '';
+        if (!door) return detail;
+        if (detail.slice(-door.length) === door) {
+          return detail.slice(0, -door.length);
+        }
+        return detail;
+      },
+
       // 从原始文本和地图结果中提取去掉省市区后的详细地址。
       extractDetailAddress: function (cleaned, parsed, finalLocation) {
         let detailAddress = parsed && parsed.detail ? parsed.detail : '';
@@ -3569,7 +3580,7 @@
       buildMapPayload: function () {
         const title = this.selectedLocation.title || this.sheetAddressTitle || '';
         const doorNumber = this.sheetDoorNumber || '';
-        const cleanTitle = this.removeDoorNumberFromDetailAddress(title, doorNumber);
+        const cleanTitle = this.removeExactDoorNumberSuffix(title, doorNumber);
         const detailAddress = cleanTitle + doorNumber;
         const province = this.selectedLocation.province || '';
         const city = this.getDirectAdminCityName(province, this.selectedLocation.city || '');
