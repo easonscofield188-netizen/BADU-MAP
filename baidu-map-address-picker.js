@@ -148,7 +148,7 @@
                             :disabled="isLocatingCurrent"
                             aria-label="重新定位"
                           >
-                            <img class="relocate-icon" src="./refresh.png" alt="" />
+                            <span class="relocate-icon"></span>
                           </button>
                         </div>
                         <div class="location-address">{{ currentLocation.address || '正在获取当前位置' }}</div>
@@ -1174,8 +1174,62 @@
 
     methods: {
       // 对外暴露 open 方法，父级可以通过组件实例手动打开地址选择器。
-      open: function () {
+      // roleType: 角色类型，用于区分投保人(0)、被保险人(1)、受益人(2)等
+      // addressData: 可选参数，用于回显已有的地址信息
+      open: function (roleType, addressData) {
+        // 如果角色类型发生变化，清空之前的地址信息
+        if (this.lastRoleType !== undefined && this.lastRoleType !== roleType) {
+          this.clearAddressData();
+        }
+        // 记录当前角色类型
+        this.lastRoleType = roleType;
+        
+        // 如果传入了地址数据，自动填充到表单中
+        if (addressData) {
+          this.fillAddressData(addressData);
+        }
+        
         this.openAddressSheet();
+      },
+      
+      // 清空所有地址数据
+      clearAddressData: function () {
+        this.sheetAddressTitle = '';
+        this.sheetProviceCityDistrict = '';
+        this.sheetDoorNumber = '';
+        this.regionForm.province = '';
+        this.regionForm.city = '';
+        this.regionForm.district = '';
+        this.regionForm.detailAddress = '';
+        this.regionTemp.province = '';
+        this.regionTemp.city = '';
+        this.regionTemp.district = '';
+        this.regionDisplayText = '';
+        this.selectedLocation = {};
+        this.form.detailAddress = '';
+        this.form.streetNumber = '';
+      },
+      
+      // 填充地址数据
+      fillAddressData: function (addressData) {
+        if (addressData.province) {
+          this.regionForm.province = this.formatProvinceName(addressData.province);
+          this.regionTemp.province = addressData.province;
+        }
+        if (addressData.city) {
+          this.regionForm.city = addressData.city;
+          this.regionTemp.city = addressData.city;
+        }
+        if (addressData.district) {
+          this.regionForm.district = addressData.district;
+          this.regionTemp.district = addressData.district;
+        }
+        if (addressData.detailAddress) {
+          this.regionForm.detailAddress = addressData.detailAddress;
+        }
+        // 更新地区显示文本
+        const region = this.getRegionParts(this.regionForm.province, this.regionForm.city, this.regionForm.district).join('');
+        this.regionDisplayText = region || '';
       },
 
       // 对外暴露 close 方法，父级可以通过组件实例手动关闭地址选择器。
