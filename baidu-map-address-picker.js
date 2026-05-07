@@ -358,6 +358,7 @@
             </div>
             <div class="search-item-distance" v-if="item.distanceText">{{ item.distanceText }}</div>
           </div>
+          <div class="search-result-finished">没有更多数据了</div>
         </div>
 
         <div class="search-empty" v-else>
