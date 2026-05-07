@@ -85,6 +85,11 @@
         default: function () {
           return [];
         }
+      },
+      // 是否展示地图选址入口；关闭后仍保留地区选址中的百度地址联想和校验能力。
+      showMapTab: {
+        type: Boolean,
+        default: true
       }
     },
     template: `
@@ -103,6 +108,7 @@
       <div class="sheet-body">
         <div class="tabs">
           <div
+            v-if="showMapTab"
             class="tab"
             :class="{ active: activeTab === 'map' }"
             @click="switchMainTab('map')"
@@ -798,7 +804,7 @@
     // data 的返回值是组件内部的响应式状态，模板里展示的内容大多来自这里。
     data: function () {
       return {
-        activeTab: 'map', // 当前主标签页：map 表示地图选址，region 表示行政区选址。
+        activeTab: this.showMapTab ? 'map' : 'region', // 当前主标签页：map 表示地图选址，region 表示行政区选址。
         showAddressSheet: false, // 弹层和页面显示状态：true 表示显示，false 表示隐藏。
         showLocationPicker: false, // 是否显示地图定位选址页。
         showSearchPage: false, // 是否显示地址搜索页。
@@ -1180,6 +1186,17 @@
       }
     },
 
+    watch: {
+      // 地图入口运行时关闭时，回到地区选址并收起所有地图相关页面。
+      showMapTab: function (value) {
+        if (value) return;
+        this.activeTab = 'region';
+        this.showLocationPicker = false;
+        this.showSearchPage = false;
+        this.showCityPickerPage = false;
+      }
+    },
+
     methods: {
       // 对外暴露 open 方法，父级可以通过组件实例手动打开地址选择器。
       // roleType: 角色类型，用于区分投保人(0)、被保险人(1)、受益人(2)等
@@ -1400,6 +1417,10 @@
 
       // 切换主面板标签，支持地图选址和地区选址。
       switchMainTab: function (tab) {
+        if (tab === 'map' && !this.showMapTab) {
+          this.activeTab = 'region';
+          return;
+        }
         this.activeTab = tab;
         this.addressRiskList = [];
         this.addressRiskText = '';
@@ -1515,7 +1536,10 @@
       // 根据已选省市区和输入内容，搜索详细地址联想结果。
       searchRegionSuggestions: function () {
         const self = this;
-        this.initBaseServices();
+        if (!this.initBaseServices()) {
+          this.clearRegionSuggest();
+          return;
+        }
         const keyword = (this.regionForm.detailAddress || '').trim();
         if (!keyword) {
           this.clearRegionSuggest();
@@ -1530,6 +1554,11 @@
         ).join('');
 
         if (!regionKeyword) {
+          this.clearRegionSuggest();
+          return;
+        }
+
+        if (!global.BMapGL || !BMapGL.LocalSearch) {
           this.clearRegionSuggest();
           return;
         }
@@ -1592,8 +1621,7 @@
           return;
         }
 
-        this.initBaseServices();
-        if (!global.BMapGL || !BMapGL.LocalSearch) {
+        if (!this.initBaseServices() || !global.BMapGL || !BMapGL.LocalSearch) {
           done();
           return;
         }
@@ -1733,21 +1761,26 @@
       initBaseServices: function () {
         if (typeof BMapGL === 'undefined') {
           this.showAlert('百度地图加载失败');
-          return;
+          return false;
         }
-        if (!this.geolocation) {
+        if (this.showMapTab && !this.geolocation) {
           this.geolocation = new BMapGL.Geolocation();
         }
         if (!this.geocoder) {
           this.geocoder = new BMapGL.Geocoder();
         }
+        return true;
       },
 
       // 打开地址选择底部面板，并准备基础地图服务。
       openAddressSheet: function () {
+        if (!this.showMapTab && this.activeTab === 'map') {
+          this.activeTab = 'region';
+        }
         this.showAddressSheet = true;
-        this.initBaseServices();
-        this.fetchCurrentLocation();
+        if (this.showMapTab && this.initBaseServices()) {
+          this.fetchCurrentLocation();
+        }
       },
 
       // 关闭地址选择底部面板。
@@ -1924,7 +1957,7 @@
         const self = this;
         if (!name) return;
 
-        this.initBaseServices();
+        if (!this.initBaseServices()) return;
         if (!this.pickerMapInstance) return;
 
         if (this.geocoder && typeof this.geocoder.getPoint === 'function') {
@@ -1991,7 +2024,7 @@
 
       // 用户手动点击重新定位时，清空旧定位展示并重新获取当前位置。
       refreshCurrentLocation: function () {
-        this.initBaseServices();
+        if (!this.initBaseServices()) return;
         if (!this.geolocation) {
           this.showAlert('定位服务暂不可用');
           return;
@@ -2041,6 +2074,7 @@
 
       // 把当前定位结果作为选中的地址使用。
       useCurrentLocation: function () {
+        if (!this.showMapTab) return;
         if (!this.currentLocation.point) {
           this.showAlert('当前位置还未获取成功');
           return;
@@ -2087,6 +2121,7 @@
 
       // 打开地图选址全屏页，并初始化地图。
       openLocationPicker: function () {
+        if (!this.showMapTab) return;
         const self = this;
         this.showLocationPicker = true;
 
@@ -2104,6 +2139,7 @@
       // 初始化地图选址页的百度地图实例和地图事件。
       initPickerMap: function () {
         const self = this;
+        if (!this.showMapTab || !this.initBaseServices()) return;
         const mapEl = this.$refs.pickerMap;
         if (!mapEl) return;
 
@@ -2282,6 +2318,7 @@
 
       // 选择附近地址列表中的一项，并回填为当前地图地址。
       chooseNearbyItem: function (item) {
+        if (!this.showMapTab) return;
         if (!item || !item.point) return;
 
         this.applyMapLocationToSheet({
@@ -2305,6 +2342,7 @@
 
       // 打开地址搜索页，并自动聚焦搜索输入框。
       openSearchPage: function () {
+        if (!this.showMapTab) return;
         this.showSearchPage = true;
         this.searchPageKeyword = this.pickerKeyword || '';
         this.searchResultList = [];
@@ -2360,7 +2398,7 @@
       // 调用百度地图本地搜索，根据关键词查找地址。
       searchAddress: function (keyword, callback) {
         const self = this;
-        if (!keyword || !this.pickerMapInstance) {
+        if (!this.showMapTab || !keyword || !this.pickerMapInstance) {
           callback([]);
           return;
         }
@@ -2882,7 +2920,7 @@
       parsePastedAddress: function () {
         const self = this;
         const text = (this.pasteText || '').trim();
-        this.initBaseServices();
+        const canUseMapServices = this.initBaseServices();
         this.isParsingPaste = true;
 
         this.addressRiskList = [];
@@ -2911,7 +2949,7 @@
         }
 
         // 地图服务不可用时仍然保留正则解析结果，让用户能确认或手动修正地址。
-        if (!this.geocoder) {
+        if (!canUseMapServices || !this.geocoder) {
           const fallbackLocation = {
             point: null,
             title: parsed.name || parsed.detail || '已识别地址',
@@ -3223,7 +3261,7 @@
           return;
         }
 
-        if (candidate.activeTab === 'map') {
+        if (candidate.activeTab === 'map' && this.showMapTab) {
           const mapLocation = Object.assign({}, candidate.finalLocation || {});
           mapLocation.title = this.removeDoorNumberFromDetailAddress(
             mapLocation.title || candidate.detailAddress || '',
@@ -3331,6 +3369,11 @@
         const self = this;
 
         if (!keyword) {
+          callback(null);
+          return;
+        }
+
+        if (!this.initBaseServices() || !global.BMapGL || !BMapGL.LocalSearch) {
           callback(null);
           return;
         }
