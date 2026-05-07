@@ -343,7 +343,13 @@
           </div>
         </div>
 
-        <div class="search-result-list" v-if="searchResultList.length">
+        <div
+          class="search-result-list"
+          v-if="searchResultList.length"
+          @touchstart.passive="blurSearchInput"
+          @mousedown="blurSearchInput"
+          @scroll.passive="blurSearchInput"
+        >
           <div
             class="search-item"
             v-for="(item, index) in searchResultList"
@@ -2317,7 +2323,21 @@
 
       // 关闭地址搜索页。
       closeSearchPage: function () {
+        this.blurSearchInput();
         this.showSearchPage = false;
+      },
+
+      // 收起搜索页输入键盘，避免移动端滑动结果列表时键盘继续压缩页面。
+      blurSearchInput: function () {
+        const input = this.$refs.searchInput;
+        if (input && typeof input.blur === 'function') {
+          input.blur();
+          return;
+        }
+
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
       },
 
       // 监听地址搜索输入，做防抖后发起搜索。
@@ -2384,6 +2404,7 @@
       // 选择搜索结果，并把地图移动到对应位置。
       chooseSearchResult: function (item) {
         const self = this;
+        this.blurSearchInput();
         this.pickerKeyword = item.title || '';
 
         if (!item || !item.point) {
