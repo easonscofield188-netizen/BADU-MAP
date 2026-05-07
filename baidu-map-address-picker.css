@@ -538,19 +538,15 @@
       position: absolute;
       left: 3.73vw;
       top: 50%;
-      width: 3.73vw;
-      height: 3.73vw;
-      border-left: 0.53vw solid #202020;
-      border-bottom: 0.53vw solid #202020;
-      transform-origin: center;   
-    }
-
-    .baidu-map-address-picker .back-btn {
-      transform: translateY(-50%) rotate(45deg);
-    }
-
-    .baidu-map-address-picker .search-back-btn {
-      transform: translateY(-50%) rotate(45deg);
+      height: 8vw;
+      display: flex;
+      align-items: center;
+      color: #333;
+      font-size: 3.73vw;
+      line-height: 1;
+      transform: translateY(-50%);
+      cursor: pointer;
+      z-index: 2;
     }
 
     .baidu-map-address-picker .search-wrap {
@@ -1056,7 +1052,7 @@
       font-size: 3.73vw;
     }
 
-    .baidu-map-address-picker .search-result-finished {
+    .baidu-map-address-picker .nearby-result-finished, .baidu-map-address-picker .search-result-finished {
       padding: 4.27vw 4.27vw 5.33vw;
       text-align: center;
       color: #aaa;

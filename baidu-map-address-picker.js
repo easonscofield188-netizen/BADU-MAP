@@ -267,7 +267,7 @@
   <transition name="slide-left-page">
     <div class="full-page" v-show="showLocationPicker">
       <div class="full-header">
-        <div class="back-btn" @click="backToAddressSheet"></div>
+        <div class="back-btn" @click="backToAddressSheet">返回</div>
         定位地址
       </div>
 
@@ -317,6 +317,7 @@
           </div>
           <div class="nearby-distance" v-if="item.distanceText">{{ item.distanceText }}</div>
         </div>
+        <div class="nearby-result-finished" v-if="nearbyList.length">没有更多数据了</div>
       </div>
     </div>
   </transition>
@@ -324,7 +325,7 @@
   <transition name="slide-left-page">
     <div class="search-page" v-show="showSearchPage">
       <div class="search-page-header">
-        <div class="search-back-btn" @click="closeSearchPage"></div>
+        <div class="search-back-btn" @click="closeSearchPage">返回</div>
         搜索地址
       </div>
 
