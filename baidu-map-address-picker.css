@@ -265,6 +265,7 @@
       display: block;
       width: 5.87vw;
       height: 5.87vw;
+      background: url("./refresh.png") center center / 5.87vw 5.87vw no-repeat;
     }
 
     .baidu-map-address-picker .btn-relocate:disabled {
