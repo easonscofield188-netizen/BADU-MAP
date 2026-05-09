@@ -307,18 +307,25 @@
     .baidu-map-address-picker .region-detail-wrap {
       display: flex;
       align-items: center;
-      min-height: 5.87vw;
+      min-height: 8vw;
       position: relative;
     }
 
     .baidu-map-address-picker .region-detail-input {
       flex: 1;
+      display: block;
+      width: 100%;
+      height: 8vw;
+      min-width: 0;
       border: none;
       outline: none;
       background: transparent;
       font-size: 4vw;
       color: #333;
       padding: 0;
+      line-height: 8vw;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .baidu-map-address-picker .region-detail-clear {
@@ -348,6 +355,8 @@
       overflow: hidden;
       max-height: 74.67vw;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     .baidu-map-address-picker .region-suggest-item {

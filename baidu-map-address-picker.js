@@ -167,8 +167,9 @@
                         <div class="location-title-row">
                           <div class="location-name">{{ currentLocation.name || '定位中...' }}</div>
                           <button
+                            type="button"
                             class="btn-relocate"
-                            @click="refreshCurrentLocation"
+                            @click.stop.prevent="refreshCurrentLocation"
                             :disabled="isLocatingCurrent"
                             aria-label="重新定位"
                           >
@@ -177,7 +178,7 @@
                         </div>
                         <div class="location-address">{{ currentLocation.address || '正在获取当前位置' }}</div>
                       </div>
-                      <button class="btn-use" @click="useCurrentLocation">使用</button>
+                      <button type="button" class="btn-use" @click.stop.prevent="useCurrentLocation">使用</button>
                     </div>
                   </div>
                 </div>
@@ -212,28 +213,37 @@
 
                 <div class="line-row">
                   <div class="line-label">详细地址</div>
-                  <div class="line-main">
+                  <div class="line-main" @click.stop="focusRegionDetailInput">
                     <div class="region-detail-wrap">
                       <input
+                        ref="regionDetailInput"
                         class="region-detail-input"
                         v-model.trim="regionForm.detailAddress"
                         placeholder="小区、门牌号"
                         @input="onRegionDetailInput"
                         @focus="onRegionDetailInput"
                         @blur="handleRegionDetailBlur"
+                        @keydown.enter.stop.prevent
+                        @compositionstart="handleRegionDetailCompositionStart"
+                        @compositionend="handleRegionDetailCompositionEnd"
                       />
                       <div
                         class="region-detail-clear"
                         v-if="regionForm.detailAddress"
-                        @click="clearRegionDetailInput"
+                        @click.stop.prevent="clearRegionDetailInput"
                       >×</div>
 
-                      <div class="region-suggest-panel" v-if="showRegionSuggest">
+                      <div
+                        class="region-suggest-panel"
+                        v-if="showRegionSuggest"
+                        @click.stop
+                        @touchstart.stop
+                      >
                         <div
                           class="region-suggest-item"
                           v-for="(item, index) in regionSuggestList"
                           :key="'region-suggest-' + index"
-                          @click="selectRegionSuggestion(item)"
+                          @click.stop.prevent="selectRegionSuggestion(item)"
                         >
                           <div class="region-suggest-title">{{ item.title || item.name || item.keyword }}</div>
                           <div class="region-suggest-address">{{ item.address || '-' }}</div>
@@ -260,12 +270,13 @@
                 ></textarea>
 
                 <div class="paste-actions" v-show="pasteText">
-                  <button class="paste-action-btn clear-btn" @click="clearPasteText" :disabled="isParsingPaste">清除</button>
+                  <button type="button" class="paste-action-btn clear-btn" @click.stop.prevent="clearPasteText" :disabled="isParsingPaste">清除</button>
                   <button
+                    type="button"
                     class="paste-action-btn submit-btn"
                     :class="{ loading: isParsingPaste }"
                     :disabled="isParsingPaste"
-                    @click="parsePastedAddress"
+                    @click.stop.prevent="parsePastedAddress"
                   >{{ isParsingPaste ? '识别中' : '提交' }}</button>
                 </div>
               </div>
@@ -281,7 +292,7 @@
       </div>
 
       <div class="sheet-footer">
-        <button class="btn-primary" :disabled="isCheckingRegionDetail" @click="confirmSheetAddress">
+        <button type="button" class="btn-primary" :disabled="isCheckingRegionDetail" @click.stop.prevent="confirmSheetAddress">
           {{ isCheckingRegionDetail ? '校验中...' : '确认' }}
         </button>
       </div>
@@ -777,8 +788,8 @@
           </div>
         </div>
         <div class="confirm-footer">
-          <button class="confirm-btn cancel" @click="cancelRiskConfirm">返回修改</button>
-          <button class="confirm-btn ok" @click="continueRiskConfirm">继续使用</button>
+          <button type="button" class="confirm-btn cancel" @click.stop.prevent="cancelRiskConfirm">返回修改</button>
+          <button type="button" class="confirm-btn ok" @click.stop.prevent="continueRiskConfirm">继续使用</button>
         </div>
       </div>
     </div>
@@ -799,8 +810,8 @@
           </div>
         </div>
         <div class="paste-confirm-footer">
-          <button class="confirm-btn cancel" @click="cancelPasteConfirm">取消</button>
-          <button class="confirm-btn ok" @click="confirmPasteSelection">确定</button>
+          <button type="button" class="confirm-btn cancel" @click.stop.prevent="cancelPasteConfirm">取消</button>
+          <button type="button" class="confirm-btn ok" @click.stop.prevent="confirmPasteSelection">确定</button>
         </div>
       </div>
     </div>
@@ -812,7 +823,7 @@
         <div class="vant-alert-header">{{ vantAlert.title }}</div>
         <div class="vant-alert-body">{{ vantAlert.message }}</div>
         <div class="vant-alert-footer">
-          <button class="vant-alert-btn" @click="closeVantAlert">确定</button>
+          <button type="button" class="vant-alert-btn" @click.stop.prevent="closeVantAlert">确定</button>
         </div>
       </div>
     </div>
@@ -924,6 +935,8 @@
 
         regionSuggestList: [], // 地区选址详细地址联想列表。
         regionSuggestTimer: null, // 地区选址详细地址联想防抖定时器。
+        regionSuggestRequestId: 0, // 地区选址联想请求序号，用于忽略过期回调。
+        isRegionDetailComposing: false, // 详细地址输入法是否正在组词。
         regionDetailFocused: false, // 地区选址详细地址输入框是否聚焦。
         regionDetailBlurTimer: null, // 地区选址详细地址输入框失焦延迟定时器。
         isCheckingRegionDetail: false, // 确认地区选址时是否正在校验详细地址归属。
@@ -1471,6 +1484,14 @@
         this.clearRegionSuggest();
       },
 
+      // 聚焦地区详细地址输入框，兼容部分 iOS WebView 点击透明 input 不触发聚焦的问题。
+      focusRegionDetailInput: function () {
+        const input = this.$refs.regionDetailInput;
+        if (input && typeof input.focus === 'function') {
+          input.focus();
+        }
+      },
+
       // 校验地址输入中的非法字符；命中后必须修改，不允许继续提交。
       validateAddressInputChars: function (fieldName, value) {
         const text = value || '';
@@ -1534,9 +1555,28 @@
           return;
         }
 
+        if (this.isRegionDetailComposing) {
+          return;
+        }
+
         this.regionSuggestTimer = setTimeout(function () {
           self.searchRegionSuggestions();
-        }, 240);
+        }, 420);
+      },
+
+      // 中文输入法组词期间暂停百度联想，避免旧 WebView 高频创建检索对象导致页面异常。
+      handleRegionDetailCompositionStart: function () {
+        this.isRegionDetailComposing = true;
+        if (this.regionSuggestTimer) {
+          clearTimeout(this.regionSuggestTimer);
+          this.regionSuggestTimer = null;
+        }
+      },
+
+      // 输入法组词完成后再触发一次联想。
+      handleRegionDetailCompositionEnd: function () {
+        this.isRegionDetailComposing = false;
+        this.onRegionDetailInput();
       },
 
       // 处理详细地址输入框失焦，延迟隐藏联想结果以保留点击候选项的机会。
@@ -1554,73 +1594,96 @@
       // 根据已选省市区和输入内容，搜索详细地址联想结果。
       searchRegionSuggestions: function () {
         const self = this;
-        if (!this.initBaseServices()) {
-          this.clearRegionSuggest();
-          return;
-        }
-        const keyword = (this.regionForm.detailAddress || '').trim();
-        if (!keyword) {
-          this.clearRegionSuggest();
-          return;
-        }
-
-        // 先拼出用户已经选择的省市区作为搜索前缀，减少百度地图联想跨城市返回结果。
-        const regionKeyword = this.getRegionParts(
-          this.regionForm.province,
-          this.regionForm.city,
-          this.regionForm.district
-        ).join('');
-
-        if (!regionKeyword) {
-          this.clearRegionSuggest();
-          return;
-        }
-
-        if (!global.BMapGL || !BMapGL.LocalSearch) {
-          this.clearRegionSuggest();
-          return;
-        }
-
-        const mapContext = this.pickerMapInstance || new BMapGL.Map(document.createElement('div'));
-        const localSearch = new BMapGL.LocalSearch(mapContext, {
-          pageCapacity: 6,
-          onSearchComplete: function (results) {
-            if (!results || localSearch.getStatus() !== 0) {
-              self.clearRegionSuggest();
-              return;
-            }
-
-            let list = [];
-            const count = results.getCurrentNumPois();
-            for (let i = 0; i < count; i++) {
-              const poi = results.getPoi(i);
-              if (!poi) continue;
-
-              const province = self.formatProvinceName(poi.province || '');
-              const city = poi.city || '';
-              const district = poi.district || '';
-
-              // 百度地图偶尔会返回相邻城市或同名 POI，这里按已选省市区再做一次过滤。
-              if (self.regionForm.province && province && province !== self.regionForm.province) continue;
-              if (self.regionForm.city && self.regionForm.city !== '市辖区' && city && city !== self.regionForm.city) continue;
-              if (self.regionForm.district && district && district !== self.regionForm.district) continue;
-
-              list.push({
-                title: poi.title || keyword,
-                name: poi.title || keyword,
-                address: poi.address || '',
-                point: poi.point || null,
-                province: province,
-                city: city,
-                district: district
-              });
-            }
-
-            self.regionSuggestList = list;
+        const requestId = ++this.regionSuggestRequestId;
+        try {
+          if (!this.showAddressSheet || this.activeTab !== 'region' || this.isRegionDetailComposing) {
+            return;
           }
-        });
+          if (!this.initBaseServices()) {
+            this.clearRegionSuggest();
+            return;
+          }
+          const keyword = (this.regionForm.detailAddress || '').trim();
+          if (!keyword) {
+            this.clearRegionSuggest();
+            return;
+          }
 
-        localSearch.search(regionKeyword + keyword);
+          // 先拼出用户已经选择的省市区作为搜索前缀，减少百度地图联想跨城市返回结果。
+          const regionKeyword = this.getRegionParts(
+            this.regionForm.province,
+            this.regionForm.city,
+            this.regionForm.district
+          ).join('');
+
+          if (!regionKeyword) {
+            this.clearRegionSuggest();
+            return;
+          }
+
+          if (!global.BMapGL || !BMapGL.LocalSearch) {
+            this.clearRegionSuggest();
+            return;
+          }
+
+          const searchArea = this.regionForm.city && this.regionForm.city !== '市辖区'
+            ? this.regionForm.city
+            : (this.regionForm.province || regionKeyword);
+          const localSearch = new BMapGL.LocalSearch(searchArea, {
+            pageCapacity: 6,
+            onSearchComplete: function (results) {
+              try {
+                if (requestId !== self.regionSuggestRequestId || !self.showAddressSheet || self.activeTab !== 'region') {
+                  return;
+                }
+                if (!results || localSearch.getStatus() !== 0) {
+                  self.clearRegionSuggest();
+                  return;
+                }
+
+                let list = [];
+                const count = results.getCurrentNumPois();
+                for (let i = 0; i < count; i++) {
+                  const poi = results.getPoi(i);
+                  if (!poi) continue;
+
+                  const province = self.formatProvinceName(poi.province || '');
+                  const city = poi.city || '';
+                  const district = poi.district || '';
+
+                  // 百度地图偶尔会返回相邻城市或同名 POI，这里按已选省市区再做一次过滤。
+                  if (self.regionForm.province && province && province !== self.regionForm.province) continue;
+                  if (self.regionForm.city && self.regionForm.city !== '市辖区' && city && city !== self.regionForm.city) continue;
+                  if (self.regionForm.district && district && district !== self.regionForm.district) continue;
+
+                  list.push({
+                    title: poi.title || keyword,
+                    name: poi.title || keyword,
+                    address: poi.address || '',
+                    point: poi.point || null,
+                    province: province,
+                    city: city,
+                    district: district
+                  });
+                }
+
+                self.regionSuggestList = list;
+              } catch (error) {
+                self.clearRegionSuggest();
+                if (global.console && console.warn) {
+                  console.warn('地区详细地址联想回调异常', error);
+                }
+              }
+            }
+          });
+
+          localSearch.search(regionKeyword + keyword);
+        } catch (error) {
+          this.clearRegionSuggest();
+          if (global.console && console.warn) {
+            console.warn('地区详细地址联想异常', error);
+          }
+        }
       },
 
       // 选择一条详细地址联想结果，并回填到表单。
