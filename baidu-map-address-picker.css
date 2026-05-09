@@ -537,7 +537,7 @@
 
     .baidu-map-address-picker .back-btn, .baidu-map-address-picker .search-back-btn {
       position: absolute;
-      left: 3.73vw;
+      right: 3.73vw;
       top: 50%;
       height: 8vw;
       display: flex;

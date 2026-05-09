@@ -35,6 +35,24 @@
     const value = String(name || '').trim();
     if (!value) return '';
 
+    // 常见行政区多音字按地名读音优先修正，避免按单字常用音分组错误。
+    const regionPolyphoneLetterMap = {
+      '重庆': 'C',
+      '长': 'C',
+      '厦门': 'X',
+      '单县': 'S',
+      '铅山': 'Y',
+      '尉犁': 'Y',
+      '曾都': 'Z',
+      '泌阳': 'B'
+    };
+    const polyphoneKey = Object.keys(regionPolyphoneLetterMap).find(function (key) {
+      return value.indexOf(key) === 0;
+    });
+    if (polyphoneKey) {
+      return regionPolyphoneLetterMap[polyphoneKey];
+    }
+
     const first = value.charAt(0);
     if (/^[A-Za-z]$/.test(first)) {
       return first.toUpperCase();
@@ -273,7 +291,7 @@
   <transition name="slide-left-page">
     <div class="full-page" v-show="showLocationPicker">
       <div class="full-header">
-        <div class="back-btn" @click="backToAddressSheet">返回</div>
+        <div class="back-btn" @click="backToAddressSheet">关闭</div>
         定位地址
       </div>
 
@@ -331,7 +349,7 @@
   <transition name="slide-left-page">
     <div class="search-page" v-show="showSearchPage">
       <div class="search-page-header">
-        <div class="search-back-btn" @click="closeSearchPage">返回</div>
+        <div class="search-back-btn" @click="closeSearchPage">关闭</div>
         搜索地址
       </div>
 
@@ -399,7 +417,7 @@
             @input="onCityPickerInput"
           />
         </div>
-        <div class="city-picker-cancel" @click="closeCityPickerPage">取消</div>
+        <div class="city-picker-cancel" @click="closeCityPickerPage">关闭</div>
       </div>
 
       <div class="city-picker-current-letter" v-if="cityPickerGroupedList.length">
