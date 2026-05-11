@@ -1281,7 +1281,12 @@
           this.regionTemp.district = addressData.district;
         }
         if (addressData.detailAddress) {
-          this.regionForm.detailAddress = addressData.detailAddress;
+          this.regionForm.detailAddress = this.stripRegionPrefixFromAddressText(
+            addressData.detailAddress,
+            this.regionForm.province,
+            this.regionForm.city,
+            this.regionForm.district
+          );
         }
         // 更新地区显示文本
         const region = this.getRegionParts(this.regionForm.province, this.regionForm.city, this.regionForm.district).join('');
@@ -1689,7 +1694,12 @@
       // 选择一条详细地址联想结果，并回填到表单。
       selectRegionSuggestion: function (item) {
         if (!item) return;
-        this.regionForm.detailAddress = item.title || item.name || this.regionForm.detailAddress;
+        this.regionForm.detailAddress = this.stripRegionPrefixFromAddressText(
+          item.title || item.name || this.regionForm.detailAddress,
+          this.regionForm.province,
+          this.regionForm.city,
+          this.regionForm.district
+        );
         this.clearRegionSuggest();
       },
 
@@ -2191,7 +2201,12 @@
 
         this.selectedLocation.province = this.formatProvinceName(this.selectedLocation.province);
 
-        this.sheetAddressTitle = title || name || '';
+        this.sheetAddressTitle = this.stripRegionPrefixFromAddressText(
+          title || name || '',
+          this.selectedLocation.province,
+          city,
+          district
+        );
         this.sheetAddressText = address;
         this.sheetProviceCityDistrict = this.getRegionParts(
           this.selectedLocation.province,
@@ -2610,6 +2625,56 @@
         return text || title || '';
       },
 
+      // 移除地址文本开头已经由“所在地区”承载的省市区，避免标题或详细地址重复展示行政区。
+      stripRegionPrefixFromAddressText: function (text, province, city, district) {
+        let value = String(text || '').trim();
+        if (!value) return '';
+
+        const provinceName = this.formatProvinceName(province || '');
+        const cityName = this.getDirectAdminCityName(provinceName, city || '');
+        const districtName = district || '';
+        const regionParts = [
+          provinceName,
+          cityName && cityName !== '市辖区' ? cityName : '',
+          districtName
+        ].filter(function (item) {
+          return !!item;
+        });
+
+        const prefixGroups = [
+          regionParts,
+          regionParts.slice(1),
+          regionParts.slice(0, 2),
+          [provinceName],
+          [districtName]
+        ].filter(function (group) {
+          return group.filter(Boolean).length > 0;
+        });
+
+        const escapeRegExp = function (str) {
+          return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        };
+
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (let i = 0; i < prefixGroups.length; i++) {
+            const group = prefixGroups[i].filter(Boolean);
+            if (!group.length) continue;
+
+            const pattern = '^' + group.map(escapeRegExp).join('\\s*');
+            const nextValue = value.replace(new RegExp(pattern), '').replace(/^[\s，,、/\\-]+/g, '');
+            if (nextValue !== value) {
+              value = nextValue.trim();
+              changed = true;
+              break;
+            }
+          }
+        }
+
+        return value || String(text || '').trim();
+      },
+
       // 从地址文本中按地区数据源反查区县名称，作为百度 POI 字段缺失时的兜底。
       inferDistrictFromAddressText: function (provinceName, cityName, addressText) {
         const text = addressText || '';
@@ -2981,6 +3046,12 @@
         this.regionForm.province = this.formatProvinceName(this.regionTemp.province || '');
         this.regionForm.city = this.regionTemp.city || '';
         this.regionForm.district = this.regionTemp.district || '';
+        this.regionForm.detailAddress = this.stripRegionPrefixFromAddressText(
+          this.regionForm.detailAddress,
+          this.regionForm.province,
+          this.regionForm.city,
+          this.regionForm.district
+        );
         this.regionDisplayText = this.getRegionParts(
           this.regionForm.province,
           this.regionForm.city,
@@ -3231,12 +3302,18 @@
         const title = finalLocation && (finalLocation.title || finalLocation.name) ? (finalLocation.title || finalLocation.name) : '';
         const fallback = this.extractDetailAddress(cleaned, parsed, finalLocation);
         const doorNumber = this.extractDoorNumber(parsed);
+        const province = finalLocation && finalLocation.province ? finalLocation.province : '';
+        const city = finalLocation && finalLocation.city ? finalLocation.city : '';
+        const district = finalLocation && finalLocation.district ? finalLocation.district : '';
+        let detailAddress = '';
 
         if (title && title.length > 2) {
-          return this.mergeDetailAddressWithDoorNumber(title, doorNumber);
+          detailAddress = this.mergeDetailAddressWithDoorNumber(title, doorNumber);
+        } else {
+          detailAddress = this.mergeDetailAddressWithDoorNumber(fallback, doorNumber);
         }
 
-        return this.mergeDetailAddressWithDoorNumber(fallback, doorNumber);
+        return this.stripRegionPrefixFromAddressText(detailAddress, province, city, district);
       },
 
       // 把地图识别出的标准 POI 名称和用户原文里的楼栋、单元、房号合并，避免回填时丢失门牌信息。
@@ -3282,13 +3359,7 @@
           detailAddress = address || '';
         }
 
-        [province, city, district].forEach(function (item) {
-          if (item) {
-            detailAddress = detailAddress.replace(item, '');
-          }
-        });
-
-        detailAddress = detailAddress.replace(/^\s+|\s+$/g, '');
+        detailAddress = this.stripRegionPrefixFromAddressText(detailAddress, province, city, district);
 
         if (!detailAddress) {
           detailAddress = address || cleaned || '';
@@ -3359,7 +3430,12 @@
           this.regionForm.province = candidate.finalLocation && candidate.finalLocation.province ? candidate.finalLocation.province : '';
           this.regionForm.city = candidate.finalLocation && candidate.finalLocation.city ? candidate.finalLocation.city : '';
           this.regionForm.district = candidate.finalLocation && candidate.finalLocation.district ? candidate.finalLocation.district : '';
-          this.regionForm.detailAddress = candidate.detailAddress || '';
+          this.regionForm.detailAddress = this.stripRegionPrefixFromAddressText(
+            candidate.detailAddress || '',
+            this.regionForm.province,
+            this.regionForm.city,
+            this.regionForm.district
+          );
           this.regionDisplayText = candidate.regionText || this.getRegionParts(
             this.regionForm.province,
             this.regionForm.city,
@@ -3727,11 +3803,21 @@
       buildMapPayload: function () {
         const title = this.selectedLocation.title || this.sheetAddressTitle || '';
         const doorNumber = this.sheetDoorNumber || '';
-        const cleanTitle = this.removeExactDoorNumberSuffix(title, doorNumber);
-        const detailAddress = cleanTitle + doorNumber;
         const province = this.selectedLocation.province || '';
         const city = this.getDirectAdminCityName(province, this.selectedLocation.city || '');
         const district = this.selectedLocation.district || '';
+        const cleanTitle = this.stripRegionPrefixFromAddressText(
+          this.removeExactDoorNumberSuffix(title, doorNumber),
+          province,
+          city,
+          district
+        );
+        const detailAddress = this.stripRegionPrefixFromAddressText(
+          cleanTitle + doorNumber,
+          province,
+          city,
+          district
+        );
         const codeParts = this.getRegionCodeParts(
           province,
           city,
@@ -3775,6 +3861,13 @@
         const province = this.regionForm.province || '';
         const city = this.getDirectAdminCityName(province, this.regionForm.city || '');
         const district = this.regionForm.district || '';
+        const detailAddress = this.stripRegionPrefixFromAddressText(
+          this.regionForm.detailAddress || '',
+          province,
+          city,
+          district
+        );
+        const fullAddress = this.getRegionParts(province, city, district).join('') + detailAddress;
         const codeParts = this.getRegionCodeParts(
           province,
           city,
@@ -3788,8 +3881,8 @@
         this.form.streetNumber = '';
         this.form.lng = '';
         this.form.lat = '';
-        this.form.detailAddress = this.regionForm.detailAddress || '';
-        this.form.fullAddress = this.composeRegionFullAddress();
+        this.form.detailAddress = detailAddress;
+        this.form.fullAddress = fullAddress;
 
         return {
           province: this.form.province,
