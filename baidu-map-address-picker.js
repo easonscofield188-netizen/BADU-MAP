@@ -234,10 +234,13 @@
                       >×</div>
 
                       <div
+                        ref="regionSuggestPanel"
                         class="region-suggest-panel"
                         v-if="showRegionSuggest"
                         @click.stop
-                        @touchstart.stop
+                        @touchstart.stop="handleRegionSuggestTouchStart"
+                        @touchmove.stop
+                        @mousedown.stop="handleRegionSuggestTouchStart"
                       >
                         <div
                           class="region-suggest-item"
@@ -938,6 +941,7 @@
         regionSuggestRequestId: 0, // 地区选址联想请求序号，用于忽略过期回调。
         isRegionDetailComposing: false, // 详细地址输入法是否正在组词。
         regionDetailFocused: false, // 地区选址详细地址输入框是否聚焦。
+        regionSuggestInteracting: false, // 是否正在触摸地区详细地址联想列表。
         regionDetailBlurTimer: null, // 地区选址详细地址输入框失焦延迟定时器。
         isCheckingRegionDetail: false, // 确认地区选址时是否正在校验详细地址归属。
 
@@ -1211,7 +1215,7 @@
       // 判断是否展示地区详细地址的联想结果。
       showRegionSuggest: function () {
         return this.activeTab === 'region'
-          && this.regionDetailFocused
+          && (this.regionDetailFocused || this.regionSuggestInteracting)
           && this.regionSuggestList.length > 0
           && !!this.regionForm.detailAddress;
       }
@@ -1481,6 +1485,7 @@
       // 清空地区详细地址的联想列表。
       clearRegionSuggest: function () {
         this.regionSuggestList = [];
+        this.regionSuggestInteracting = false;
       },
 
       // 清空地区选址里的详细地址输入框。
@@ -1491,9 +1496,65 @@
 
       // 聚焦地区详细地址输入框，兼容部分 iOS WebView 点击透明 input 不触发聚焦的问题。
       focusRegionDetailInput: function () {
+        this.regionSuggestInteracting = false;
         const input = this.$refs.regionDetailInput;
         if (input && typeof input.focus === 'function') {
           input.focus();
+        }
+      },
+
+      // 触摸联想列表时主动收起移动端键盘，同时保持列表可见，方便继续滑动选择。
+      handleRegionSuggestTouchStart: function () {
+        this.regionSuggestInteracting = true;
+        this.regionDetailFocused = false;
+        if (this.regionDetailBlurTimer) {
+          clearTimeout(this.regionDetailBlurTimer);
+          this.regionDetailBlurTimer = null;
+        }
+        this.blurRegionDetailInput();
+      },
+
+      // 收起地区详细地址输入键盘。
+      blurRegionDetailInput: function () {
+        const input = this.$refs.regionDetailInput;
+        if (input && typeof input.blur === 'function') {
+          input.blur();
+          return;
+        }
+
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+      },
+
+      // 根据 iOS 键盘后的可视区域滚动面板，避免联想列表被键盘遮住。
+      adjustRegionSuggestPosition: function () {
+        const panel = this.$refs.regionSuggestPanel;
+        if (!panel || !this.showRegionSuggest) return;
+
+        try {
+          const sheetBody = panel.closest ? panel.closest('.sheet-body') : null;
+          const viewport = window.visualViewport;
+          const bottomLimit = viewport
+            ? viewport.offsetTop + viewport.height - 12
+            : window.innerHeight - 12;
+          const rect = panel.getBoundingClientRect();
+          const minPanelHeight = Math.min(180, Math.max(120, window.innerHeight * 0.22));
+          let overflow = rect.bottom - bottomLimit;
+
+          if (sheetBody && overflow > 0) {
+            sheetBody.scrollTop += overflow + 12;
+          }
+
+          window.requestAnimationFrame(function () {
+            const nextRect = panel.getBoundingClientRect();
+            const availableHeight = Math.max(minPanelHeight, bottomLimit - nextRect.top - 12);
+            panel.style.maxHeight = Math.min(280, availableHeight) + 'px';
+          });
+        } catch (error) {
+          if (global.console && console.warn) {
+            console.warn('调整地区联想列表位置异常', error);
+          }
         }
       },
 
@@ -1547,6 +1608,7 @@
       onRegionDetailInput: function () {
         const self = this;
         this.regionDetailFocused = true;
+        this.regionSuggestInteracting = false;
         if (this.regionDetailBlurTimer) {
           clearTimeout(this.regionDetailBlurTimer);
           this.regionDetailBlurTimer = null;
@@ -1587,6 +1649,10 @@
       // 处理详细地址输入框失焦，延迟隐藏联想结果以保留点击候选项的机会。
       handleRegionDetailBlur: function () {
         const self = this;
+        if (this.regionSuggestInteracting) {
+          this.regionDetailFocused = false;
+          return;
+        }
         if (this.regionDetailBlurTimer) {
           clearTimeout(this.regionDetailBlurTimer);
         }
@@ -1673,6 +1739,9 @@
                 }
 
                 self.regionSuggestList = list;
+                self.$nextTick(function () {
+                  self.adjustRegionSuggestPosition();
+                });
               } catch (error) {
                 self.clearRegionSuggest();
                 if (global.console && console.warn) {
