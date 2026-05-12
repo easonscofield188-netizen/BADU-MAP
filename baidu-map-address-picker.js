@@ -104,6 +104,13 @@
           return [];
         }
       },
+      // 父组件传入的省市区树形数据，替代旧版 allianity-city-data.js 全局变量。
+      cityData: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
       // 是否展示地图选址入口；关闭后仍保留地区选址中的百度地址联想和校验能力。
       showMapTab: {
         type: Boolean,
@@ -988,10 +995,7 @@
 
       // 根据当前加载到的地区数据，返回组件可用的地区数据源。
       regionDataSource: function () {
-        if (typeof cityData3 !== 'undefined' && Array.isArray(cityData3)) {
-          return cityData3;
-        }
-        return [];
+        return Array.isArray(this.cityData) ? this.cityData : [];
       },
 
       // 取出中国境内的省市区树形数据，供地区选择器使用。
@@ -2963,6 +2967,10 @@
 
       // 打开地区选择器，并同步当前已选择的地区状态。
       openRegionSelector: function () {
+        if (!this.regionDataSource.length) {
+          this.showAlert('地区数据加载中，请稍后重试！');
+          return;
+        }
         this.showRegionSelector = true;
         this.regionSelectorTab = this.overseaRegionList.indexOf(this.regionForm.province) > -1 ? 'oversea' : 'domestic';
 

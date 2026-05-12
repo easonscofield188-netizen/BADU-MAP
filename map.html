@@ -105,6 +105,7 @@
 
     <baidu-map-address-picker
       ref="addressPicker"
+      :city-data="cityData"
       @confirm="handleAddressConfirm"
     ></baidu-map-address-picker>
   </div>
@@ -112,12 +113,13 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.min.js"></script>
   <script src="./allianity-city-data.js?v=202604232036" charset="UTF-8"></script>
   <script src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=HgjE1KgxQkaoM0G66LUd1kQ1TpPBpQg5"></script>
-  <script src="./baidu-map-address-picker.js?v=202605121145-1" charset="UTF-8"></script>
+  <script src="./baidu-map-address-picker.js?v=202605121545-1" charset="UTF-8"></script>
   <script>
     new Vue({
       el: '#app',
       data: function () {
         return {
+          cityData: [],
           form: {
             province: '',
             city: '',
@@ -131,7 +133,27 @@
           }
         };
       },
+      mounted: function () {
+        this.loadCityDataFromJs();
+      },
       methods: {
+        /**
+         * 功能：从已加载的 JS 数据文件读取省市区数据，传给地址选择子组件使用。
+         * 入参：无。
+         * 出参：无。
+         * 异常：数据不存在时输出错误日志并保留空数组。
+         */
+        loadCityDataFromJs: function () {
+          try {
+            if (typeof cityData3 === 'undefined' || !Array.isArray(cityData3)) {
+              throw new Error('地区 JS 数据不存在或格式错误');
+            }
+            this.cityData = cityData3;
+          } catch (error) {
+            console.error('加载地区数据失败：', error);
+            this.cityData = [];
+          }
+        },
         openAddressPicker: function () {
           this.$refs.addressPicker.open();
         },
