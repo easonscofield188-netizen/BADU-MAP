@@ -853,6 +853,9 @@
         showVantAlert: false, // 是否显示统一提示弹窗。
         showRegionSelector: false, // 是否显示省市区选择弹窗。
         showPasteBoard: false, // 是否展开地址粘贴板。
+        pageScrollLocked: false, // 地址弹窗打开时是否已锁定外部页面滚动。
+        pageScrollTop: 0, // 锁定页面滚动前的页面滚动位置。
+        pageScrollOriginalStyle: null, // 锁定页面滚动前 body/html 的内联样式。
         // 操作状态：用于控制加载中、动画中、拖拽中等临时 UI 状态。
         isParsingPaste: false, // 是否正在解析粘贴的地址文本。
         isLocatingCurrent: false, // 是否正在重新获取当前位置。
@@ -1226,6 +1229,15 @@
     },
 
     watch: {
+      // 地址弹窗打开时锁定外部页面滚动，关闭后恢复。
+      showAddressSheet: function (value) {
+        if (value) {
+          this.lockPageScroll();
+          return;
+        }
+        this.unlockPageScroll();
+      },
+
       // 地图入口运行时关闭时，回到地区选址并收起所有地图相关页面。
       showMapTab: function (value) {
         if (value) return;
@@ -1234,6 +1246,10 @@
         this.showSearchPage = false;
         this.showCityPickerPage = false;
       }
+    },
+
+    beforeDestroy: function () {
+      this.unlockPageScroll();
     },
 
     methods: {
@@ -1950,6 +1966,61 @@
       // 关闭地址选择底部面板。
       closeAddressSheet: function () {
         this.showAddressSheet = false;
+      },
+
+      // 锁定外部页面滚动，避免地址弹窗打开后底层页面跟随滑动。
+      lockPageScroll: function () {
+        if (this.pageScrollLocked || !document.body || !document.documentElement) {
+          return;
+        }
+
+        const body = document.body;
+        const html = document.documentElement;
+        const scrollTop = window.pageYOffset || html.scrollTop || body.scrollTop || 0;
+
+        this.pageScrollTop = scrollTop;
+        this.pageScrollOriginalStyle = {
+          bodyPosition: body.style.position,
+          bodyTop: body.style.top,
+          bodyLeft: body.style.left,
+          bodyRight: body.style.right,
+          bodyWidth: body.style.width,
+          bodyOverflow: body.style.overflow,
+          htmlOverflow: html.style.overflow
+        };
+
+        html.style.overflow = 'hidden';
+        body.style.position = 'fixed';
+        body.style.top = '-' + scrollTop + 'px';
+        body.style.left = '0';
+        body.style.right = '0';
+        body.style.width = '100%';
+        body.style.overflow = 'hidden';
+        this.pageScrollLocked = true;
+      },
+
+      // 恢复外部页面滚动状态和原来的滚动位置。
+      unlockPageScroll: function () {
+        if (!this.pageScrollLocked || !document.body || !document.documentElement) {
+          return;
+        }
+
+        const body = document.body;
+        const html = document.documentElement;
+        const originalStyle = this.pageScrollOriginalStyle || {};
+        const scrollTop = this.pageScrollTop || 0;
+
+        body.style.position = originalStyle.bodyPosition || '';
+        body.style.top = originalStyle.bodyTop || '';
+        body.style.left = originalStyle.bodyLeft || '';
+        body.style.right = originalStyle.bodyRight || '';
+        body.style.width = originalStyle.bodyWidth || '';
+        body.style.overflow = originalStyle.bodyOverflow || '';
+        html.style.overflow = originalStyle.htmlOverflow || '';
+
+        this.pageScrollLocked = false;
+        this.pageScrollOriginalStyle = null;
+        window.scrollTo(0, scrollTop);
       },
 
       // 处理地图定位按钮事件，可选择是否重新回到当前位置。
