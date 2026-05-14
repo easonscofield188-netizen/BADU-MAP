@@ -4030,6 +4030,9 @@
           this.validatePasteTextBeforeConfirm();
           this.validateRedundantAddressParts();
           payload = this.buildMapPayload();
+          if (!this.validateMapRegionCodes(payload)) {
+            return;
+          }
           this.finishConfirmPayload(payload);
         } else {
           if (!this.regionDisplayText) {
@@ -4065,6 +4068,18 @@
 
         this.riskConfirmed = false;
         this.savePayload(payload);
+      },
+
+      // 校验地图选址匹配到的省市区编号，缺少任一级时引导用户改用地区选址。
+      validateMapRegionCodes: function (payload) {
+        const data = payload || {};
+        data.province_code = '';
+        if (data.province_code && data.city_code && data.district_code) {
+          return true;
+        }
+
+        this.showAlert('当前地图地址的省市区编号无法完整匹配，请切换到“地区选址”填写您的常用地址信息');
+        return false;
       },
 
       // 取消风险确认弹窗，保留当前地址选择状态。
