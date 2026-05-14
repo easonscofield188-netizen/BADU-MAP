@@ -124,13 +124,13 @@
   </transition>
 
   <transition name="slide-up-sheet">
-    <div class="sheet" v-show="showAddressSheet">
+    <div class="sheet" :class="{ 'paste-keyboard-active': isPasteTextareaFocused }" v-show="showAddressSheet">
       <div class="sheet-header">
         请选择常住地址
         <div class="sheet-close" @click="closeAddressSheet">×</div>
       </div>
 
-      <div class="sheet-body">
+      <div class="sheet-body" ref="sheetBody">
         <div class="tabs">
           <div
             v-if="showMapTab"
@@ -270,13 +270,14 @@
           <div class="paste-wrap">
             <div class="paste-panel">
               <div class="paste-collapse" :class="{ collapsed: !showPasteBoard }">
-              <div class="paste-box">
+              <div class="paste-box" ref="pasteBox">
                 <textarea
+                  ref="pasteTextarea"
                   v-model.trim="pasteText"
                   class="paste-textarea"
-                  :placeholder="activeTab === 'map'
-                    ? '试试粘贴你的常用地址，包含省市区以及街道的详细地址，可快速识别您的地址信息'
-                    : '试试粘贴收件人姓名、手机号、收货地址，可快速识别您的收货信息'"
+                  placeholder="试试粘贴你的常用地址，包含省市区以及街道的详细地址，可快速识别您的地址信息"
+                  @focus="handlePasteTextareaFocus"
+                  @blur="handlePasteTextareaBlur"
                 ></textarea>
 
                 <div class="paste-actions" v-show="pasteText">
@@ -853,6 +854,8 @@
         showVantAlert: false, // 是否显示统一提示弹窗。
         showRegionSelector: false, // 是否显示省市区选择弹窗。
         showPasteBoard: false, // 是否展开地址粘贴板。
+        isPasteTextareaFocused: false, // 地址粘贴板输入框是否聚焦。
+        pasteKeyboardAdjustTimerList: [], // 地址粘贴板键盘避让滚动定时器列表。
         pageScrollLocked: false, // 地址弹窗打开时是否已锁定外部页面滚动。
         pageScrollTop: 0, // 锁定页面滚动前的页面滚动位置。
         pageScrollOriginalStyle: null, // 锁定页面滚动前 body/html 的内联样式。
@@ -1249,6 +1252,7 @@
     },
 
     beforeDestroy: function () {
+      this.clearPasteKeyboardAdjustTimers();
       this.unlockPageScroll();
     },
 
@@ -1473,6 +1477,75 @@
       // 展开或收起地址粘贴板。
       togglePasteBoard: function () {
         this.showPasteBoard = !this.showPasteBoard;
+        if (this.showPasteBoard) {
+          this.$nextTick(this.adjustPasteBoardForKeyboard);
+        }
+      },
+
+      // 地址粘贴板输入框聚焦时，滚动弹层内容避开 iOS 键盘。
+      handlePasteTextareaFocus: function () {
+        const self = this;
+        this.isPasteTextareaFocused = true;
+        this.clearPasteKeyboardAdjustTimers();
+        this.adjustPasteBoardForKeyboard();
+        [120, 320, 650].forEach(function (delay) {
+          const timer = setTimeout(function () {
+            self.adjustPasteBoardForKeyboard();
+          }, delay);
+          self.pasteKeyboardAdjustTimerList.push(timer);
+        });
+      },
+
+      // 地址粘贴板输入框失焦后恢复底部确认区。
+      handlePasteTextareaBlur: function () {
+        const self = this;
+        this.clearPasteKeyboardAdjustTimers();
+        setTimeout(function () {
+          self.isPasteTextareaFocused = false;
+        }, 120);
+      },
+
+      // 清理地址粘贴板键盘避让定时器。
+      clearPasteKeyboardAdjustTimers: function () {
+        (this.pasteKeyboardAdjustTimerList || []).forEach(function (timer) {
+          clearTimeout(timer);
+        });
+        this.pasteKeyboardAdjustTimerList = [];
+      },
+
+      // 把地址粘贴板输入区域滚动到键盘上方，避免 iOS 键盘遮挡。
+      adjustPasteBoardForKeyboard: function () {
+        const sheetBody = this.$refs.sheetBody;
+        const pasteBox = this.$refs.pasteBox;
+        if (!sheetBody || !pasteBox || !this.showPasteBoard) {
+          return;
+        }
+
+        try {
+          const bodyRect = sheetBody.getBoundingClientRect();
+          const boxRect = pasteBox.getBoundingClientRect();
+          const viewport = window.visualViewport;
+          const bottomLimit = viewport
+            ? viewport.offsetTop + viewport.height - 12
+            : window.innerHeight - 12;
+          const targetTop = bodyRect.top + 8;
+
+          if (boxRect.top > targetTop) {
+            sheetBody.scrollTop += boxRect.top - targetTop;
+          }
+
+          window.requestAnimationFrame(function () {
+            const nextBoxRect = pasteBox.getBoundingClientRect();
+            const overflow = nextBoxRect.bottom - bottomLimit;
+            if (overflow > 0) {
+              sheetBody.scrollTop += overflow + 12;
+            }
+          });
+        } catch (error) {
+          if (global.console && console.warn) {
+            console.warn('调整地址粘贴板键盘避让异常', error);
+          }
+        }
       },
 
       // 切换主面板标签，支持地图选址和地区选址。
@@ -4144,7 +4217,6 @@
       // 校验地图选址匹配到的省市区编号，缺少任一级时引导用户改用地区选址。
       validateMapRegionCodes: function (payload) {
         const data = payload || {};
-        data.province_code = '';
         if (data.province_code && data.city_code && data.district_code) {
           return true;
         }
